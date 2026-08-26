@@ -2,3 +2,6 @@ ALLOWED_MODELS:
   - deepseek/deepseek-v4-flash-0731
 NOTIFICATION_CHANNELS:
   - telegram
+
+STORAGE_PARENT_FOLDER:
+  - financial_data
