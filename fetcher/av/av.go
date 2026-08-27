@@ -28,7 +28,7 @@ const (
 	FunctionGlobalQuote = "GLOBAL_QUOTE"
 
 	storageFolder  = "alphavantage"
-	fileTimeFormat = "2006-01-02T15-04-05"
+	fileTimeFormat = "2006-01-02"
 )
 
 // responseKey is the top-level key a successful payload must contain.
@@ -64,18 +64,18 @@ func NewWithKey(apiKey string, storage *storage.ArchivusClient) *Client {
 
 // TimeSeriesDaily fetches TIME_SERIES_DAILY for symbol (e.g. "ITC.BSE") and
 // archives the raw payload to Archivus.
-func (c *Client) TimeSeriesDaily(ctx context.Context, symbol string) (json.RawMessage, error) {
-	return c.fetchAndSave(ctx, FunctionTimeSeriesDaily, symbol)
+func (c *Client) TimeSeriesDaily(ctx context.Context, symbol string, exchange string) (json.RawMessage, error) {
+	return c.fetchAndSave(ctx, FunctionTimeSeriesDaily, symbol, exchange)
 }
 
 // GlobalQuote fetches GLOBAL_QUOTE for symbol and archives the raw payload
 // to Archivus.
-func (c *Client) GlobalQuote(ctx context.Context, symbol string) (json.RawMessage, error) {
-	return c.fetchAndSave(ctx, FunctionGlobalQuote, symbol)
+func (c *Client) GlobalQuote(ctx context.Context, symbol, exchange string) (json.RawMessage, error) {
+	return c.fetchAndSave(ctx, FunctionGlobalQuote, symbol, exchange)
 }
 
-func (c *Client) fetchAndSave(ctx context.Context, function, symbol string) (json.RawMessage, error) {
-	raw, err := c.fetch(ctx, function, symbol)
+func (c *Client) fetchAndSave(ctx context.Context, function, symbol, exchange string) (json.RawMessage, error) {
+	raw, err := c.fetch(ctx, function, symbol, exchange)
 	if err != nil {
 		return nil, err
 	}
@@ -85,7 +85,7 @@ func (c *Client) fetchAndSave(ctx context.Context, function, symbol string) (jso
 	return raw, nil
 }
 
-func (c *Client) fetch(ctx context.Context, function, symbol string) (json.RawMessage, error) {
+func (c *Client) fetch(ctx context.Context, function, symbol, exchange string) (json.RawMessage, error) {
 	if c.apiKey == "" {
 		return nil, fmt.Errorf("av: missing API key")
 	}
@@ -95,6 +95,9 @@ func (c *Client) fetch(ctx context.Context, function, symbol string) (json.RawMe
 
 	q := url.Values{}
 	q.Set("function", function)
+	if exchange != "" {
+		symbol = symbol + "." + exchange
+	}
 	q.Set("symbol", symbol)
 	q.Set("apikey", c.apiKey)
 
@@ -138,15 +141,25 @@ func (c *Client) fetch(ctx context.Context, function, symbol string) (json.RawMe
 	return json.RawMessage(body), nil
 }
 
-// save uploads the raw payload to Archivus under alphavantage/<function>/.
+// save uploads the raw payload to Archivus under <symbol>/ as
+// <symbol>_<function>_<date>.json.
 // If no store is configured, the payload is not persisted.
 func (c *Client) save(function, symbol string, raw []byte) error {
 	if c.storage == nil {
 		return nil
 	}
-	folder := storageFolder + "/" + function
-	name := fmt.Sprintf("%s_%s.json", symbol, time.Now().Format(fileTimeFormat))
-	return c.storage.Upload(folder, []*storage.UploadFile{{Name: name, Content: raw}})
+	folder, fileName := c.resolvePath(symbol, function)
+	return c.storage.Upload(folder, []*storage.UploadFile{{Name: fileName, Content: raw}})
+}
+
+func (c *Client) resolvePath(symbol, function string) (string, string) {
+	if c.storage == nil {
+		return "", ""
+	}
+	fileName := fmt.Sprintf("%s_%s_%s.json", symbol, function, time.Now().Format(fileTimeFormat))
+	folder := symbol + "/"
+
+	return folder, fileName
 }
 
 // waitRateLimit spaces requests at least rateLimitDelay apart to stay under

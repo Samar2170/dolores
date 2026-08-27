@@ -119,8 +119,8 @@ func (c *Client) save(name string, raw []byte) error {
 	if c.storage == nil {
 		return nil
 	}
-	folder := storageFolder + "/stock"
-	filename := fmt.Sprintf("%s_%s.json", name, time.Now().Format(fileTimeFormat))
+	folder := name + "/"
+	filename := fmt.Sprintf("%s_indiasm_%s.json", name, time.Now().Format(fileTimeFormat))
 	return c.storage.Upload(folder, []*storage.UploadFile{{Name: filename, Content: raw}})
 }
 
