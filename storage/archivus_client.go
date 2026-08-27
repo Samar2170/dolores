@@ -49,6 +49,7 @@ type ArchivusClient struct {
 
 // NewArchivusClient creates a client scoped to parentFolder. The base URL is
 // read from ARCHIVUS_BASE_URL in the environment (via fetcher/config).
+// Use WithTimeout for large uploads that outgrow the default HTTP timeout.
 func NewArchivusClient(apiKey, parentFolder string) *ArchivusClient {
 	baseURL := strings.TrimRight(fetcherconfig.ARCHIVUS_BASE_URL, "/")
 	if baseURL == "" {
@@ -349,6 +350,13 @@ func splitPath(p string) (parent, name string) {
 
 func escapeQuotes(s string) string {
 	return strings.ReplaceAll(s, `"`, `\"`)
+}
+
+// WithTimeout replaces the underlying HTTP client timeout. Safe to chain:
+// storage.NewArchivusClient(...).WithTimeout(5*time.Minute)
+func (c *ArchivusClient) WithTimeout(d time.Duration) *ArchivusClient {
+	c.hc.Timeout = d
+	return c
 }
 
 func parseFilename(cd string) string {
