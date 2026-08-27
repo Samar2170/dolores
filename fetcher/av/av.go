@@ -50,7 +50,7 @@ type Client struct {
 // New creates a client using AV_API_KEY from fetcher/config. Raw responses
 // are uploaded to Archivus via store.
 func New(storage *storage.ArchivusClient) *Client {
-	return NewWithKey(config.AV_API_KEY, storage)
+	return NewWithKey(config.ALPHAVANTAGE_API_KEY, storage)
 }
 
 // NewWithKey creates a client with an explicit API key.

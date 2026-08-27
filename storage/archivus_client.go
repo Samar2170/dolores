@@ -97,10 +97,10 @@ func (c *ArchivusClient) Upload(folderPath string, files []*UploadFile) error {
 		return nil
 	}
 
-	full := c.resolvePath(folderPath)
-	if err := c.EnsureFolder(full); err != nil {
+	if err := c.EnsureFolder(folderPath); err != nil {
 		return err
 	}
+	full := c.resolvePath(folderPath)
 
 	driveID, err := c.getDriveID()
 	if err != nil {

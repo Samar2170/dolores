@@ -7,10 +7,11 @@ import (
 )
 
 var (
-	AV_API_KEY        string
-	ARCHIVUS_API_KEY  string
-	ARCHIVUS_BASE_URL string
-	INDIA_SM_API_KEY  string
+	ALPHAVANTAGE_API_KEY string
+	INDIAN_SM_API_KEY    string
+	INDIAN_SM_API_KEY2   string
+	ARCHIVUS_API_KEY     string
+	ARCHIVUS_BASE_URL    string
 )
 
 func LoadApiKeys() error {
@@ -18,10 +19,11 @@ func LoadApiKeys() error {
 	if err != nil {
 		return err
 	}
-	AV_API_KEY = loadConfigVar(&dotenv, "AV_API_KEY")
+	ALPHAVANTAGE_API_KEY = loadConfigVar(&dotenv, "ALPHAVANTAGE_API_KEY")
 	ARCHIVUS_API_KEY = loadConfigVar(&dotenv, "ARCHIVUS_API_KEY")
 	ARCHIVUS_BASE_URL = loadConfigVar(&dotenv, "ARCHIVUS_BASE_URL")
-	INDIA_SM_API_KEY = loadConfigVar(&dotenv, "INDIA_SM_API_KEY")
+	INDIAN_SM_API_KEY = loadConfigVar(&dotenv, "INDIAN_SM_API_KEY")
+	INDIAN_SM_API_KEY2 = loadConfigVar(&dotenv, "INDIAN_SM_API_KEY2")
 	return nil
 }
 
