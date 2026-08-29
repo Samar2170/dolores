@@ -10,7 +10,9 @@ import (
 	"strings"
 	"time"
 
-	"gorm.io/gorm"
+	"go.mongodb.org/mongo-driver/v2/bson"
+	"go.mongodb.org/mongo-driver/v2/mongo"
+	"go.mongodb.org/mongo-driver/v2/mongo/options"
 
 	fetcher_config "dolores/fetcher/config"
 	"dolores/internal/llm"
@@ -69,7 +71,7 @@ func main() {
 	}
 }
 
-func runCompany(ctx context.Context, db *gorm.DB, hc *http.Client, arch *storage.ArchivusClient, lg *llm.Client, col *research.Collector, info research.CompanyInfo) error {
+func runCompany(ctx context.Context, db *mongo.Database, hc *http.Client, arch *storage.ArchivusClient, lg *llm.Client, col *research.Collector, info research.CompanyInfo) error {
 	co, err := research.UpsertCompany(db, info)
 	if err != nil {
 		return fmt.Errorf("upsert company: %w", err)
@@ -170,14 +172,14 @@ func logSummary(info research.CompanyInfo, docs []research.CollectedDoc) {
 
 // marketShare runs the grounded market-share pass when product categories are
 // already known from the products row.
-func marketShare(ctx context.Context, db *gorm.DB, lg *llm.Client, arch *storage.ArchivusClient, info research.CompanyInfo, companyID uint) {
-	res, err := research.GetResource(db, companyID, models.SegmentProducts)
-	if err != nil || res == nil || res.ExtractedData == nil {
+func marketShare(ctx context.Context, db *mongo.Database, lg *llm.Client, arch *storage.ArchivusClient, info research.CompanyInfo, companyID bson.ObjectID) {
+	payloadBytes, err := research.GetResourceJSON(db, companyID, models.SegmentProducts)
+	if err != nil || payloadBytes == nil {
 		log.Printf("[market] %s skipped: products not extracted yet", info.Symbol)
 		return
 	}
 	var p research.ExtractedProducts
-	if json.Unmarshal(res.ExtractedData, &p) != nil {
+	if json.Unmarshal(payloadBytes, &p) != nil {
 		log.Printf("[market] %s skipped: products payload unreadable", info.Symbol)
 		return
 	}
@@ -216,16 +218,27 @@ func marketShare(ctx context.Context, db *gorm.DB, lg *llm.Client, arch *storage
 	log.Printf("[market] %s stored", info.Symbol)
 }
 
-func reviewRowState(db *gorm.DB, companyID uint, info research.CompanyInfo) error {
+func reviewRowState(db *mongo.Database, companyID bson.ObjectID, info research.CompanyInfo) error {
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
 	fmt.Printf("\n--- %s resource rows ---\n", info.Symbol)
+	cur, err := db.Collection(models.ColCompanyResources).Find(ctx,
+		bson.M{"company_id": companyID},
+		options.Find().SetSort(bson.M{"analysis_segment": 1}),
+	)
+	if err != nil {
+		return err
+	}
+	defer cur.Close(ctx)
 	var rows []models.CompanyResearchResource
-	if err := db.Where("company_id = ?", companyID).Order("analysis_segment").Find(&rows).Error; err != nil {
+	if err := cur.All(ctx, &rows); err != nil {
 		return err
 	}
 	for _, r := range rows {
 		state := "pending"
 		if r.ExtractedData != nil {
-			state = fmt.Sprintf("%d-byte JSON", len(r.ExtractedData))
+			state = fmt.Sprintf("JSON doc (%d keys)", len(r.ExtractedData))
 		}
 		link := r.ResearchResourceLink
 		if len(link) > 80 {

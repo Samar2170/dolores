@@ -1,6 +1,10 @@
 package models
 
-import "gorm.io/gorm"
+import (
+	"time"
+
+	"go.mongodb.org/mongo-driver/v2/bson"
+)
 
 const (
 	SegmentProducts     = "products"
@@ -9,28 +13,38 @@ const (
 	SegmentMarketShare  = "market_share"
 )
 
+const (
+	ColCompanies        = "companies"
+	ColCompanyLinks     = "company_links"
+	ColCompanyResources = "company_research_resources"
+)
+
+type BaseModel struct {
+	ID        bson.ObjectID `bson:"_id,omitempty" json:"id"`
+	CreatedAt time.Time     `bson:"created_at" json:"created_at"`
+	UpdatedAt time.Time     `bson:"updated_at" json:"updated_at"`
+}
+
 type Company struct {
-	*gorm.Model
-	Symbol   string `gorm:"uniqueIndex:idx_company_symbol_exchange"`
-	Exchange string `gorm:"uniqueIndex:idx_company_symbol_exchange"`
+	BaseModel `bson:",inline"`
+	Symbol    string `bson:"symbol" json:"symbol"`
+	Exchange  string `bson:"exchange" json:"exchange"`
 }
 
 type CompanyLinks struct {
-	*gorm.Model
-	Company               Company `gorm:"foreignKey:CompanyID"`
-	CompanyID             uint    `gorm:"uniqueIndex:idx_company_links_company"`
-	OfficialWebsite       string
-	InvestorRelationsLink string
+	BaseModel             `bson:",inline"`
+	CompanyID             bson.ObjectID `bson:"company_id" json:"company_id"`
+	OfficialWebsite       string        `bson:"official_website" json:"official_website"`
+	InvestorRelationsLink string        `bson:"investor_relations_link" json:"investor_relations_link"`
 }
 
 type CompanyResearchResource struct {
-	*gorm.Model
-	Company              Company `gorm:"foreignKey:CompanyID"`
-	CompanyID            uint    `gorm:"uniqueIndex:idx_crr_company_segment"`
-	AnalysisSegment      string  `gorm:"uniqueIndex:idx_crr_company_segment"`
-	Source               string
-	ResearchResourceLink string
-	RawDataUrl           string
-	// extracted data should be JSONB
-	ExtractedData []byte
+	BaseModel            `bson:",inline"`
+	CompanyID            bson.ObjectID `bson:"company_id" json:"company_id"`
+	AnalysisSegment      string        `bson:"analysis_segment" json:"analysis_segment"`
+	Source               string        `bson:"source" json:"source"`
+	ResearchResourceLink string        `bson:"research_resource_link" json:"research_resource_link"`
+	RawDataUrl           string        `bson:"raw_data_url" json:"raw_data_url"`
+	// extracted data is stored as a JSON document
+	ExtractedData bson.M `bson:"extracted_data,omitempty" json:"extracted_data,omitempty"`
 }
