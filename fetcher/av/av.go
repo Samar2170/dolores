@@ -1,6 +1,7 @@
 // Package av provides a minimal Alpha Vantage client for the endpoints that
 // work on a free API key (see apitest/alphavantage.ipynb): TIME_SERIES_DAILY
-// and GLOBAL_QUOTE. Raw JSON payloads are archived to Archivus storage.
+// and GLOBAL_QUOTE. Raw JSON payloads are archived to Archivus storage and
+// mirrored into MongoDB (market.Repo) for indexing and querying.
 package av
 
 import (
@@ -14,6 +15,7 @@ import (
 	"time"
 
 	"dolores/fetcher/config"
+	"dolores/internal/market"
 	"dolores/storage"
 )
 
@@ -37,10 +39,12 @@ var responseKey = map[string]string{
 	FunctionGlobalQuote:     "Global Quote",
 }
 
-// Client calls Alpha Vantage and archives raw responses to Archivus.
+// Client calls Alpha Vantage and archives raw responses to Archivus and
+// MongoDB.
 type Client struct {
 	apiKey  string
 	storage *storage.ArchivusClient
+	saver   market.Saver
 	hc      *http.Client
 
 	mu       sync.Mutex
@@ -48,28 +52,29 @@ type Client struct {
 }
 
 // New creates a client using AV_API_KEY from fetcher/config. Raw responses
-// are uploaded to Archivus via store.
-func New(storage *storage.ArchivusClient) *Client {
-	return NewWithKey(config.ALPHAVANTAGE_API_KEY, storage)
+// are uploaded to Archivus via storage and mirrored to MongoDB via saver.
+func New(storage *storage.ArchivusClient, saver market.Saver) *Client {
+	return NewWithKey(config.ALPHAVANTAGE_API_KEY, storage, saver)
 }
 
 // NewWithKey creates a client with an explicit API key.
-func NewWithKey(apiKey string, storage *storage.ArchivusClient) *Client {
+func NewWithKey(apiKey string, storage *storage.ArchivusClient, saver market.Saver) *Client {
 	return &Client{
 		apiKey:  apiKey,
 		storage: storage,
+		saver:   saver,
 		hc:      &http.Client{Timeout: httpTimeout},
 	}
 }
 
-// TimeSeriesDaily fetches TIME_SERIES_DAILY for symbol (e.g. "ITC.BSE") and
-// archives the raw payload to Archivus.
+// TimeSeriesDaily fetches TIME_SERIES_DAILY for symbol (e.g. "ITC") and
+// archives the raw payload to Archivus and MongoDB.
 func (c *Client) TimeSeriesDaily(ctx context.Context, symbol string, exchange string) (json.RawMessage, error) {
 	return c.fetchAndSave(ctx, FunctionTimeSeriesDaily, symbol, exchange)
 }
 
 // GlobalQuote fetches GLOBAL_QUOTE for symbol and archives the raw payload
-// to Archivus.
+// to Archivus and MongoDB.
 func (c *Client) GlobalQuote(ctx context.Context, symbol, exchange string) (json.RawMessage, error) {
 	return c.fetchAndSave(ctx, FunctionGlobalQuote, symbol, exchange)
 }
@@ -79,7 +84,7 @@ func (c *Client) fetchAndSave(ctx context.Context, function, symbol, exchange st
 	if err != nil {
 		return nil, err
 	}
-	if err := c.save(function, symbol, raw); err != nil {
+	if err := c.save(ctx, function, symbol, exchange, raw); err != nil {
 		return nil, err
 	}
 	return raw, nil
@@ -141,25 +146,34 @@ func (c *Client) fetch(ctx context.Context, function, symbol, exchange string) (
 	return json.RawMessage(body), nil
 }
 
-// save uploads the raw payload to Archivus under <symbol>/ as
-// <symbol>_<function>_<date>.json.
-// If no store is configured, the payload is not persisted.
-func (c *Client) save(function, symbol string, raw []byte) error {
-	if c.storage == nil {
-		return nil
-	}
-	folder, fileName := c.resolvePath(symbol, function)
-	return c.storage.Upload(folder, []*storage.UploadFile{{Name: fileName, Content: raw}})
+// kindByFunction maps an Alpha Vantage function to its market collection kind.
+var kindByFunction = map[string]string{
+	FunctionTimeSeriesDaily: market.KindTimeSeriesDaily,
+	FunctionGlobalQuote:     market.KindGlobalQuote,
 }
 
-func (c *Client) resolvePath(symbol, function string) (string, string) {
-	if c.storage == nil {
-		return "", ""
+// save persists the raw payload twice for redundancy: as a file under
+// <symbol>/ in Archivus and as a queryable document in MongoDB. Both sinks
+// are optional; a configured sink that fails aborts the fetch.
+func (c *Client) save(ctx context.Context, function, symbol, exchange string, raw []byte) error {
+	day := time.Now().Format(fileTimeFormat)
+	if c.storage != nil {
+		folder := symbol + "/"
+		fileName := fmt.Sprintf("%s_%s_%s.json", symbol, function, day)
+		if err := c.storage.Upload(folder, []*storage.UploadFile{{Name: fileName, Content: raw}}); err != nil {
+			return err
+		}
 	}
-	fileName := fmt.Sprintf("%s_%s_%s.json", symbol, function, time.Now().Format(fileTimeFormat))
-	folder := symbol + "/"
-
-	return folder, fileName
+	if c.saver != nil {
+		kind, ok := kindByFunction[function]
+		if !ok {
+			kind = function
+		}
+		if err := c.saver.SaveRaw(ctx, kind, symbol, exchange, day, raw); err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 // waitRateLimit spaces requests at least rateLimitDelay apart to stay under

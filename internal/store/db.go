@@ -11,6 +11,7 @@ import (
 	"go.mongodb.org/mongo-driver/v2/mongo"
 	"go.mongodb.org/mongo-driver/v2/mongo/options"
 
+	"dolores/internal/market"
 	"dolores/internal/models"
 )
 
@@ -107,7 +108,11 @@ func (s *Store) Migrate(_ ...interface{}) error {
 		Keys:    bson.D{{Key: "company_id", Value: 1}, {Key: "analysis_segment", Value: 1}},
 		Options: options.Index().SetUnique(true).SetName("idx_crr_company_segment"),
 	})
-	return err
+	if err != nil {
+		return err
+	}
+
+	return market.Migrate(s.DB)
 }
 
 // IsNotFound reports whether err is a missing-document error.
