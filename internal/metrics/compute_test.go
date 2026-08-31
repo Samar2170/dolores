@@ -5,6 +5,7 @@ import (
 	"math"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 )
 
@@ -292,5 +293,141 @@ func TestReportingFallbackAndTTMDropped(t *testing.T) {
 	}
 	if fy := fyLabel(st, "2020-03-31"); fy != "FY 2020" {
 		t.Errorf("fy label = %q", fy)
+	}
+}
+
+func TestTTMRowStashed(t *testing.T) {
+	st := fixtureStatements(t)
+	if st.TTM == nil {
+		t.Fatalf("TTM income row not stashed from fixture")
+	}
+	if st.TTM.EPS == nil || st.TTM.EBITDA == nil {
+		t.Fatalf("TTM row missing EPS/EBITDA")
+	}
+}
+
+func TestComputeValuation(t *testing.T) {
+	var notes []string
+	st := fixtureStatements(t)
+	doc := Compute(st)
+	// Price 400 INR, market cap 40000 crore -> 100 crore implied shares.
+	snap := &StockSnapshot{Price: 400, MarketCap: 40000, Day: "2026-08-31", Source: "indiasm_stock"}
+	v := ComputeValuation(st, doc.Years, snap, &notes)
+
+	near(t, val(t, v.Price), 400, 1e-9)
+	near(t, val(t, v.MarketCap), 40000, 1e-9)
+	near(t, val(t, v.Shares), 100, 1e-9) // implied = MC / price
+
+	// TTM basis: EPS 20.347480337725422, EBITDA 27448.180000000008.
+	if v.EPSBasis != "ttm" || v.EBITDABasis != "ttm" {
+		t.Errorf("basis: eps=%q ebitda=%q, want ttm/ttm", v.EPSBasis, v.EBITDABasis)
+	}
+	near(t, val(t, v.EPS), 20.347480337725422, 1e-6)
+	near(t, val(t, v.PE), 400/20.347480337725422, 1e-6)
+
+	// P/B = MC / equity = 40000 / 181225.87; BVPS = equity / 100.
+	near(t, val(t, v.PB), 40000/181225.87, 1e-6)
+	near(t, val(t, v.BookValuePS), 181225.87/100.0, 1e-6)
+
+	// EV = MC + debt(0) - cash(102091.11); EV/EBITDA over TTM EBITDA.
+	wantEV := 40000 - 102091.11
+	near(t, val(t, v.EV), wantEV, 1e-6)
+	near(t, val(t, v.EVEBITDA), wantEV/27448.180000000008, 1e-6)
+
+	// PEG nil: latest EPS YoY is negative for Kotak FY2026; growth recorded.
+	if v.PEG != nil {
+		t.Errorf("PEG must be nil for negative growth, got %v", *v.PEG)
+	}
+	if v.EPSGrowth == nil {
+		t.Errorf("EPS growth should be recorded")
+	}
+	foundDebtNote := false
+	for _, n := range notes {
+		if strings.Contains(n, "total debt not reported") {
+			foundDebtNote = true
+		}
+	}
+	if !foundDebtNote {
+		t.Errorf("expected debt caveat note, notes: %v", notes)
+	}
+}
+
+func TestComputeValuationManufacturer(t *testing.T) {
+	var notes []string
+	income := []IncomeRow{
+		{DisplayPeriod: "FY 2020", EndDate: "2020-03-31T00:00:00.000Z", Reporting: "standalone",
+			TotalRevenue: ptr(1000), EBITDA: ptr(200), PBIT: ptr(150), PBT: ptr(120), TaxOther: ptr(30), NetIncome: ptr(90), EPS: ptr(9)},
+		{DisplayPeriod: "FY 2021", EndDate: "2021-03-31T00:00:00.000Z", Reporting: "standalone",
+			TotalRevenue: ptr(1100), EBITDA: ptr(240), PBIT: ptr(185), PBT: ptr(157), TaxOther: ptr(39.25), NetIncome: ptr(117.75), EPS: ptr(10.7)},
+	}
+	balance := []BalanceRow{
+		{EndDate: "2020-03-31T00:00:00.000Z", Reporting: "standalone",
+			TotalDebt: ptr(300), CashAndSTI: ptr(100), TotalEquity: ptr(500), SharesOutstanding: ptr(10)},
+		{EndDate: "2021-03-31T00:00:00.000Z", Reporting: "standalone",
+			TotalDebt: ptr(320), CashAndSTI: ptr(120), TotalEquity: ptr(600), SharesOutstanding: ptr(10)},
+	}
+	st := BuildStatements("TEST", income, balance, nil)
+	doc := Compute(st)
+	snap := &StockSnapshot{Price: 214, MarketCap: 2140, Day: "2026-08-31", Source: "indiasm_stock"}
+	v := ComputeValuation(st, doc.Years, snap, &notes)
+
+	// No TTM -> FY basis.
+	if v.EPSBasis != "fy" || v.EBITDABasis != "fy" {
+		t.Errorf("basis: %q/%q, want fy/fy", v.EPSBasis, v.EBITDABasis)
+	}
+	// P/E = 214/10.7 = 20.
+	near(t, val(t, v.PE), 20.0, 1e-6)
+	// P/B = 2140/600; BVPS = 600/10.
+	near(t, val(t, v.PB), 2140.0/600, 1e-6)
+	near(t, val(t, v.BookValuePS), 60.0, 1e-6)
+	// EV = 2140 + 320 - 120 = 2340; EV/EBITDA = 2340/240.
+	near(t, val(t, v.EV), 2340, 1e-6)
+	near(t, val(t, v.EVEBITDA), 2340.0/240, 1e-6)
+	// PEG = P/E / (EPS growth %); growth = 10.7/9-1.
+	near(t, val(t, v.EPSGrowth), 10.7/9-1, 1e-6)
+	near(t, val(t, v.PEG), 20.0/((10.7/9-1)*100), 1e-6)
+}
+
+func TestComputeValuationMarketCapFallback(t *testing.T) {
+	var notes []string
+	income := []IncomeRow{
+		{DisplayPeriod: "FY 2021", EndDate: "2021-03-31T00:00:00.000Z", Reporting: "standalone",
+			TotalRevenue: ptr(1100), EBITDA: ptr(240), EPS: ptr(10.7), PBT: ptr(157), TaxOther: ptr(39.25), NetIncome: ptr(117.75)},
+	}
+	balance := []BalanceRow{
+		{EndDate: "2021-03-31T00:00:00.000Z", Reporting: "standalone",
+			TotalDebt: ptr(320), CashAndSTI: ptr(120), TotalEquity: ptr(600), SharesOutstanding: ptr(10)},
+	}
+	st := BuildStatements("TEST", income, balance, nil)
+	doc := Compute(st)
+	// No market cap reported: falls back to price x tickertape share count.
+	snap := &StockSnapshot{Price: 214, MarketCap: 0, Day: "2026-08-31", Source: "indiasm_stock"}
+	v := ComputeValuation(st, doc.Years, snap, &notes)
+
+	near(t, val(t, v.MarketCap), 214*10, 1e-9)
+	near(t, val(t, v.Shares), 10, 1e-9)
+	near(t, val(t, v.PE), 214.0/10.7, 1e-6)
+	near(t, val(t, v.PB), 2140.0/600, 1e-6)
+	found := false
+	for _, n := range notes {
+		if strings.Contains(n, "market cap derived") {
+			found = true
+		}
+	}
+	if !found {
+		t.Errorf("expected market-cap fallback note, notes: %v", notes)
+	}
+}
+
+func TestComputeValuationNoSnapshot(t *testing.T) {
+	var notes []string
+	st := fixtureStatements(t)
+	doc := Compute(st)
+	v := ComputeValuation(st, doc.Years, nil, &notes)
+	if v.Price != nil || v.PE != nil || v.PB != nil || v.EVEBITDA != nil || v.PEG != nil {
+		t.Errorf("valuation must be empty without an indiasm snapshot")
+	}
+	if len(notes) == 0 {
+		t.Errorf("expected a note explaining missing indiasm data")
 	}
 }

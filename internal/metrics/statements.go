@@ -24,6 +24,16 @@ func BuildStatements(symbol string, income []IncomeRow, balance []BalanceRow, ca
 		Cashflow: make(map[string]CashflowRow),
 	}
 
+	// Keep the latest TTM income row (no endDate, no reporting tag) aside
+	// for the valuation snapshot before the reporting filter drops it.
+	for i := len(income) - 1; i >= 0; i-- {
+		if normDay(income[i].EndDate) == "" && income[i].DisplayPeriod == "TTM" {
+			row := income[i]
+			st.TTM = &row
+			break
+		}
+	}
+
 	income = filterReporting(income, &st.Reporting)
 	balance = filterReporting(balance, &st.Reporting)
 	cashflow = filterReporting(cashflow, &st.Reporting)
