@@ -5,3 +5,5 @@ __reference_files__
 
 storage.db
 storage.db-*
+
+input/*

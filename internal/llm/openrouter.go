@@ -13,25 +13,34 @@ import (
 const defaultBaseURL = "https://openrouter.ai/api/v1"
 
 type Client struct {
-	apiKey string
-	models []string
-	hc     *http.Client
+	apiKey    string
+	models    []string
+	maxTokens int
+	hc        *http.Client
 }
 
-func NewClient(apiKey string, models []string) *Client {
+// Option configures optional Client behaviour.
+type Option func(*Client)
+
+func NewClient(apiKey string, models []string, opts ...Option) *Client {
 	if len(models) == 0 {
 		models = []string{"z-ai/glm-5.3-flash"}
 	}
-	return &Client{
+	c := &Client{
 		apiKey: apiKey,
 		models: models,
 		hc:     &http.Client{Timeout: 3 * time.Minute},
 	}
+	for _, opt := range opts {
+		opt(c)
+	}
+	return c
 }
 
 type chatRequest struct {
-	Model    string        `json:"model"`
-	Messages []chatMessage `json:"messages"`
+	Model     string        `json:"model"`
+	Messages  []chatMessage `json:"messages"`
+	MaxTokens int           `json:"max_tokens,omitempty"`
 }
 
 type chatMessage struct {
@@ -99,6 +108,7 @@ func (c *Client) chat(ctx context.Context, model, system, user string) (string, 
 			{Role: "system", Content: system},
 			{Role: "user", Content: user},
 		},
+		MaxTokens: c.maxTokens,
 	})
 	if err != nil {
 		return "", err
