@@ -20,10 +20,14 @@ var (
 
 const defaultStorageParentFolder = "financial_data"
 
+const defaultResearchLLMMaxRequests = 8
+
 type RunningConfig struct {
-	ALLOWED_MODELS        []string `yaml:"ALLOWED_MODELS"`
-	NOTIFICATION_CHANNELS []string `yaml:"NOTIFICATION_CHANNELS"`
-	STORAGE_PARENT_FOLDER []string `yaml:"STORAGE_PARENT_FOLDER"`
+	ALLOWED_MODELS           []string `yaml:"ALLOWED_MODELS"`
+	NOTIFICATION_CHANNELS    []string `yaml:"NOTIFICATION_CHANNELS"`
+	STORAGE_PARENT_FOLDER    []string `yaml:"STORAGE_PARENT_FOLDER"`
+	RESEARCH_LLM_MAX_REQUESTS int      `yaml:"RESEARCH_LLM_MAX_REQUESTS"`
+	RESEARCH_LLM_MAX_TOKENS   int      `yaml:"RESEARCH_LLM_MAX_TOKENS"`
 }
 
 var Config RunningConfig
@@ -57,6 +61,21 @@ func StorageParentFolder() string {
 		}
 	}
 	return defaultStorageParentFolder
+}
+
+// ResearchLLMMaxRequests returns the per-symbol LLM request cap for research
+// sessions, defaulting to the pipeline's worst case (8 calls) when unset.
+func ResearchLLMMaxRequests() int {
+	if Config.RESEARCH_LLM_MAX_REQUESTS > 0 {
+		return Config.RESEARCH_LLM_MAX_REQUESTS
+	}
+	return defaultResearchLLMMaxRequests
+}
+
+// ResearchLLMMaxTokens returns the per-symbol LLM token cap for research
+// sessions; zero means unlimited.
+func ResearchLLMMaxTokens() int {
+	return Config.RESEARCH_LLM_MAX_TOKENS
 }
 
 func LoadApiKeys() error {

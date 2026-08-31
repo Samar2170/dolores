@@ -186,6 +186,9 @@ func runStrictJSON(ctx context.Context, client *llm.Client, user, segment string
 	} else if ctx.Err() != nil {
 		return nil, ctx.Err()
 	}
+	if errors.Is(err, llm.ErrBudgetExhausted) {
+		return nil, err
+	}
 
 	retryMsg := fmt.Sprintf("%s\n\nIMPORTANT: your previous reply could not be parsed/validated for this schema (%v). Reply again with ONE valid JSON object matching the exact keys requested.", user, err)
 	raw2, err2 := client.CompleteJSON(ctx, strictJSONSystem, retryMsg)

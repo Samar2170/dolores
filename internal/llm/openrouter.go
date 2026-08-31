@@ -48,12 +48,19 @@ type chatMessage struct {
 	Content string `json:"content"`
 }
 
+type chatUsage struct {
+	PromptTokens     int `json:"prompt_tokens"`
+	CompletionTokens int `json:"completion_tokens"`
+	TotalTokens      int `json:"total_tokens"`
+}
+
 type chatResponse struct {
 	Choices []struct {
 		Message struct {
 			Content string `json:"content"`
 		} `json:"message"`
 	} `json:"choices"`
+	Usage *chatUsage `json:"usage,omitempty"`
 	Error *struct {
 		Message string `json:"message"`
 		Code    int    `json:"code"`
@@ -102,6 +109,11 @@ func (c *Client) CompleteText(ctx context.Context, system, user string) (string,
 }
 
 func (c *Client) chat(ctx context.Context, model, system, user string) (string, error) {
+	budget := budgetFrom(ctx)
+	if err := budget.reserve(); err != nil {
+		return "", err
+	}
+
 	payload, err := json.Marshal(chatRequest{
 		Model: model,
 		Messages: []chatMessage{
@@ -130,6 +142,13 @@ func (c *Client) chat(ctx context.Context, model, system, user string) (string, 
 	var out chatResponse
 	if err := json.NewDecoder(resp.Body).Decode(&out); err != nil {
 		return "", fmt.Errorf("%s %s: %w", resp.Status, "bad body", err)
+	}
+	if out.Usage != nil {
+		tokens := out.Usage.TotalTokens
+		if tokens == 0 {
+			tokens = out.Usage.PromptTokens + out.Usage.CompletionTokens
+		}
+		budget.record(tokens)
 	}
 	if out.Error != nil {
 		return "", fmt.Errorf("%s %s", resp.Status, out.Error.Message)

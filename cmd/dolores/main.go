@@ -189,21 +189,24 @@ func runResearch(ctx context.Context, args []string) error {
 	lg := llm.NewClient(fetcher_config.OPENROUTER_API_KEY, fetcher_config.Config.ALLOWED_MODELS)
 	col := research.NewCollector(hc, arch)
 
-	for _, info := range research.Universe {
-		if *symbolFilter != "" && info.Symbol != *symbolFilter {
-			continue
-		}
-		fmt.Printf("\n########## %s (%s) ##########\n", info.Symbol, info.Name)
-		started := time.Now()
-		err := runCompany(ctx, dbStore.DB, hc, arch, lg, col, info)
-		if err != nil {
-			log.Printf("[company] %s FAILED after %s: %v",
-				info.Symbol, time.Since(started).Round(time.Millisecond), err)
-			continue
-		}
-		log.Printf("[company] %s completed in %s", info.Symbol, time.Since(started).Round(time.Millisecond))
+	if *symbolFilter == "" {
+		return nil
 	}
-	return nil
+	fmt.Printf("\n########## %s ", *symbolFilter)
+	budget := llm.NewBudget(
+		fetcher_config.ResearchLLMMaxRequests(),
+		fetcher_config.ResearchLLMMaxTokens(),
+	)
+	started := time.Now()
+	err = runCompany(llm.WithBudget(ctx, budget), dbStore.DB, hc, arch, lg, col, info)
+	reqs, toks := budget.Snapshot()
+	if err != nil {
+		log.Printf("[company] %s FAILED after %s: %v (llm: %d requests, %d tokens)",
+			info.Symbol, time.Since(started).Round(time.Millisecond), err, reqs, toks)
+		continue
+	}
+	log.Printf("[company] %s completed in %s (llm: %d requests, %d tokens)",
+		info.Symbol, time.Since(started).Round(time.Millisecond), reqs, toks)
 }
 
 func runCompany(ctx context.Context, db *mongo.Database, hc *http.Client, arch *storage.ArchivusClient, lg *llm.Client, col *research.Collector, info research.CompanyInfo) error {
@@ -229,6 +232,10 @@ func runCompany(ctx context.Context, db *mongo.Database, hc *http.Client, arch *
 	sources := docSources(docs)
 
 	for _, segment := range topicSegments {
+		if llm.Exhausted(ctx) {
+			log.Printf("[company] %s: llm budget exhausted - skipping remaining segments + market share", info.Symbol)
+			break
+		}
 		in := research.ResourceInput{
 			CompanyID:    co.ID,
 			Segment:      segment,
@@ -257,6 +264,10 @@ func runCompany(ctx context.Context, db *mongo.Database, hc *http.Client, arch *
 		}
 	}
 
+	if llm.Exhausted(ctx) {
+		log.Printf("[company] %s: llm budget exhausted - skipping market share", info.Symbol)
+		return reviewRowState(db, co.ID, info)
+	}
 	marketShare(ctx, db, lg, arch, info, co.ID)
 
 	return reviewRowState(db, co.ID, info)

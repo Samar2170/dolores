@@ -7,3 +7,5 @@ storage.db
 storage.db-*
 
 input/*
+
+*_extract.json
