@@ -5,6 +5,8 @@ import (
 
 	"dolores/fetcher/av"
 	fetcher_config "dolores/fetcher/config"
+	"dolores/fetcher/indiasm"
+	"dolores/fetcher/tickertape"
 	"dolores/internal/market"
 	"dolores/internal/store"
 	"dolores/storage"
@@ -28,7 +30,7 @@ func main() {
 	arch := storage.NewArchivusClient(fetcher_config.ARCHIVUS_API_KEY, "financial_data")
 	repo := market.NewRepo(st.DB)
 	avClient := av.New(arch, repo)
-	// indiasmClient := indiasm.New(arch, repo)
+	indiasmClient := indiasm.New(arch, repo)
 
 	err = arch.EnsureFolder(symbol)
 	if err != nil {
@@ -42,8 +44,13 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
-	// _, err = indiasmClient.Stock(ctx, symbol)
-	// if err != nil {
-	// 	panic(err)
-	// }
+	_, err = indiasmClient.Stock(ctx, symbol)
+	if err != nil {
+		panic(err)
+	}
+
+	tt, err := tickertape.Extract(symbol, htmlFilePath)
+	if err != nil {
+		panic(err)
+	}
 }

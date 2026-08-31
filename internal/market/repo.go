@@ -22,6 +22,38 @@ const (
 	KindStock           = "stock"
 )
 
+// Tickertape kinds are the pageProps section keys; each maps to its own
+// collection (see tickerCollections).
+const (
+	KindTickerCommentary          = "commentary"
+	KindTickerFaq                 = "stockPageFaq"
+	KindTickerIncomeAnnual        = "income-normal-annual"
+	KindTickerIncomeInterim       = "income-normal-interim"
+	KindTickerBalancesheetAnnual  = "balancesheet-normal-annual"
+	KindTickerCashflowAnnual      = "cashflow-normal-annual"
+	KindTickerPeers               = "peers-technical"
+	KindTickerEventsCorpActions   = "events-corp-actions"
+	KindTickerEventsAnnouncements = "events-announcements"
+	KindTickerEventsLegal         = "events-legal"
+)
+
+// tickerCollections pairs each tickertape kind with its collection.
+var tickerCollections = []struct {
+	kind string
+	coll string
+}{
+	{KindTickerCommentary, models.ColTickerCommentary},
+	{KindTickerFaq, models.ColTickerFaq},
+	{KindTickerIncomeAnnual, models.ColTickerIncomeAnnual},
+	{KindTickerIncomeInterim, models.ColTickerIncomeInterim},
+	{KindTickerBalancesheetAnnual, models.ColTickerBalancesheetAnnual},
+	{KindTickerCashflowAnnual, models.ColTickerCashflowAnnual},
+	{KindTickerPeers, models.ColTickerPeers},
+	{KindTickerEventsCorpActions, models.ColTickerEventsCorpActions},
+	{KindTickerEventsAnnouncements, models.ColTickerEventsAnnouncements},
+	{KindTickerEventsLegal, models.ColTickerEventsLegal},
+}
+
 // Saver persists one raw fetcher payload. *Repo implements it; the fetcher
 // packages depend on this interface so they stay decoupled from MongoDB.
 type Saver interface {
@@ -53,6 +85,13 @@ func Migrate(db *mongo.Database) error {
 		{models.ColAVTimeSeries, bson.D{{Key: "symbol", Value: 1}, {Key: "exchange", Value: 1}, {Key: "day", Value: 1}}, "idx_avts_symbol_exchange_day"},
 		{models.ColAVGlobalQuote, bson.D{{Key: "symbol", Value: 1}, {Key: "exchange", Value: 1}, {Key: "day", Value: 1}}, "idx_avgq_symbol_exchange_day"},
 		{models.ColIndiasmStock, bson.D{{Key: "name", Value: 1}, {Key: "day", Value: 1}}, "idx_istk_name_day"},
+	}
+	for _, t := range tickerCollections {
+		specs = append(specs, struct {
+			coll string
+			keys bson.D
+			name string
+		}{t.coll, bson.D{{Key: "symbol", Value: 1}, {Key: "day", Value: 1}}, "idx_tt_" + t.coll + "_symbol_day"})
 	}
 	for _, s := range specs {
 		_, err := db.Collection(s.coll).Indexes().CreateOne(ctx, mongo.IndexModel{
@@ -95,7 +134,16 @@ func (r *Repo) SaveRaw(ctx context.Context, kind, symbol, exchange, day string, 
 		coll = models.ColIndiasmStock
 		filter = bson.M{"name": symbol, "day": day}
 	default:
-		return fmt.Errorf("market: unknown kind %q", kind)
+		for _, t := range tickerCollections {
+			if t.kind == kind {
+				coll = t.coll
+				filter = bson.M{"symbol": symbol, "day": day}
+				break
+			}
+		}
+		if coll == "" {
+			return fmt.Errorf("market: unknown kind %q", kind)
+		}
 	}
 
 	set = bson.M{"payload": payload, "fetched_at": now()}
@@ -106,14 +154,20 @@ func (r *Repo) SaveRaw(ctx context.Context, kind, symbol, exchange, day string, 
 	return err
 }
 
-// payloadDoc converts a raw JSON payload into an embedded BSON document so
-// its fields stay queryable from MongoDB.
-func payloadDoc(raw []byte) (bson.D, error) {
-	var doc bson.D
-	if err := bson.UnmarshalExtJSON(raw, false, &doc); err != nil {
+// payloadDoc converts a raw JSON payload into an embedded BSON document (or
+// array, for tickertape sections that are top-level lists) so its fields stay
+// queryable from MongoDB.
+func payloadDoc(raw []byte) (any, error) {
+	var v any
+	if err := bson.UnmarshalExtJSON(raw, false, &v); err != nil {
 		return nil, err
 	}
-	return doc, nil
+	switch v.(type) {
+	case bson.D, bson.A:
+		return v, nil
+	default:
+		return nil, fmt.Errorf("market: unexpected payload type %T", v)
+	}
 }
 
 func now() time.Time { return time.Now().UTC() }
