@@ -12,6 +12,7 @@ import (
 	"go.mongodb.org/mongo-driver/v2/mongo/options"
 
 	"dolores/internal/market"
+	"dolores/internal/metrics"
 	"dolores/internal/models"
 )
 
@@ -112,7 +113,10 @@ func (s *Store) Migrate(_ ...interface{}) error {
 		return err
 	}
 
-	return market.Migrate(s.DB)
+	if err := market.Migrate(s.DB); err != nil {
+		return err
+	}
+	return metrics.Migrate(s.DB)
 }
 
 // IsNotFound reports whether err is a missing-document error.

@@ -7,6 +7,11 @@ const (
 	ColIndiasmStock  = "indiasm_stock"
 )
 
+// Derived data collections.
+const (
+	ColKeyMetrics = "key_metrics"
+)
+
 // Tickertape collections: one per extracted pageProps section.
 const (
 	ColTickerCommentary          = "tickertape_commentary"

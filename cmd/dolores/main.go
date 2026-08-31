@@ -26,6 +26,7 @@ import (
 	"dolores/fetcher/tickertape"
 	"dolores/internal/llm"
 	"dolores/internal/market"
+	"dolores/internal/metrics"
 	"dolores/internal/models"
 	"dolores/internal/research"
 	"dolores/internal/store"
@@ -54,6 +55,8 @@ func main() {
 		err = runTickertape(ctx, os.Args[2:])
 	case "research":
 		err = runResearch(ctx, os.Args[2:])
+	case "key_metrics":
+		err = runKeyMetrics(ctx, os.Args[2:])
 	default:
 		usage()
 	}
@@ -68,9 +71,10 @@ func usage() {
 usage: dolores <command> [flags]
 
 commands:
-  api_data    fetch market API payloads (Alpha Vantage + IndiaSM) for a symbol
-  tickertape  extract stock data from a saved Tickertape page HTML
-  research    run the company research pipeline (use -symbol to filter)`)
+  api_data      fetch market API payloads (Alpha Vantage + IndiaSM) for a symbol
+  tickertape    extract stock data from a saved Tickertape page HTML
+  research      run the company research pipeline (use -symbol to filter)
+  key_metrics   compute key metrics from stored tickertape financials into key_metrics`)
 	os.Exit(2)
 }
 
@@ -158,6 +162,47 @@ func runTickertape(ctx context.Context, args []string) error {
 	repo := market.NewRepo(st.DB)
 
 	return tickertape.ExtractToFile(ctx, *symbol, *htmlPath, *outPath, arch, repo)
+}
+
+// runKeyMetrics computes key metrics from the stored tickertape financial
+// statements and upserts them into the key_metrics collection, for one symbol
+// or for every symbol with financials.
+func runKeyMetrics(ctx context.Context, args []string) error {
+	fs := flag.NewFlagSet("key_metrics", flag.ExitOnError)
+	symbol := fs.String("symbol", "", "compute for one symbol (default: all symbols with tickertape financials)")
+	if err := fs.Parse(args); err != nil {
+		return err
+	}
+
+	st, err := store.GetStore(".")
+	if err != nil {
+		return fmt.Errorf("db: %w", err)
+	}
+	defer st.Close()
+	if err := st.Migrate(); err != nil {
+		return fmt.Errorf("migrate: %w", err)
+	}
+
+	if *symbol != "" {
+		doc, err := metrics.ComputeSymbol(ctx, st.DB, *symbol)
+		if err != nil {
+			return fmt.Errorf("key_metrics: %w", err)
+		}
+		if doc == nil {
+			log.Printf("[key_metrics] %s: no tickertape financial statements stored", *symbol)
+			return nil
+		}
+		log.Printf("[key_metrics] %s stored: %s-%s (%d years, %s)",
+			doc.Symbol, doc.FirstFY, doc.LastFY, doc.YearsCount, doc.Reporting)
+		return nil
+	}
+
+	n, err := metrics.ComputeAll(ctx, st.DB)
+	if err != nil {
+		return fmt.Errorf("key_metrics: %w", err)
+	}
+	log.Printf("[key_metrics] %d symbols stored", n)
+	return nil
 }
 
 // runResearch runs the company research pipeline over the research universe,
