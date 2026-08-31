@@ -29,6 +29,10 @@ type Company struct {
 	BaseModel `bson:",inline"`
 	Symbol    string `bson:"symbol" json:"symbol"`
 	Exchange  string `bson:"exchange" json:"exchange"`
+	Name      string `bson:"name,omitempty" json:"name,omitempty"`
+	Industry  string `bson:"industry,omitempty" json:"industry,omitempty"`
+	Series    string `bson:"series,omitempty" json:"series,omitempty"`
+	ISINCode  string `bson:"isin_code,omitempty" json:"isin_code,omitempty"`
 }
 
 type CompanyLinks struct {

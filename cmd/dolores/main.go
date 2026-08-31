@@ -198,15 +198,20 @@ func runResearch(ctx context.Context, args []string) error {
 		fetcher_config.ResearchLLMMaxTokens(),
 	)
 	started := time.Now()
-	err = runCompany(llm.WithBudget(ctx, budget), dbStore.DB, hc, arch, lg, col, info)
+	info, err := research.GetCompanyBySymbol(dbStore.DB, *symbolFilter)
+	if err != nil {
+		return fmt.Errorf("get company by symbol: %w", err)
+	}
+	err = runCompany(llm.WithBudget(ctx, budget), dbStore.DB, hc, arch, lg, col, *info)
 	reqs, toks := budget.Snapshot()
 	if err != nil {
 		log.Printf("[company] %s FAILED after %s: %v (llm: %d requests, %d tokens)",
 			info.Symbol, time.Since(started).Round(time.Millisecond), err, reqs, toks)
-		continue
+		return err
 	}
 	log.Printf("[company] %s completed in %s (llm: %d requests, %d tokens)",
 		info.Symbol, time.Since(started).Round(time.Millisecond), reqs, toks)
+	return nil
 }
 
 func runCompany(ctx context.Context, db *mongo.Database, hc *http.Client, arch *storage.ArchivusClient, lg *llm.Client, col *research.Collector, info research.CompanyInfo) error {

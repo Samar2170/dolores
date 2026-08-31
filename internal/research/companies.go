@@ -1,26 +1,60 @@
 package research
 
-// CompanyInfo identifies one company in the hardcoded research universe.
+import (
+	"context"
+	"errors"
+	"time"
+
+	"go.mongodb.org/mongo-driver/v2/bson"
+	"go.mongodb.org/mongo-driver/v2/mongo"
+
+	"dolores/internal/models"
+)
+
+// CompanyInfo identifies one company in the research universe and mirrors
+// the fields stored in the companies collection.
 type CompanyInfo struct {
-	Symbol        string
-	Exchange      string
-	Name          string
-	Manufacturing bool
+	Symbol   string
+	Exchange string
+	Name     string
+	Industry string
+	Series   string
+	ISINCode string
 }
 
-// var Universe = []CompanyInfo{
-// 	{Symbol: "WELCORP", Exchange: "BSE", Name: "Welspun Corp", Manufacturing: true},
-// 	{Symbol: "ITC", Exchange: "BSE", Name: "ITC", Manufacturing: true},
-// 	{Symbol: "HDFCBANK", Exchange: "BSE", Name: "HDFC Bank", Manufacturing: false},
-// 	{Symbol: "KOTAKBANK", Exchange: "BSE", Name: "Kotak Mahindra Bank", Manufacturing: false},
-// }
+// Manufacturing reports whether the company belongs to a manufacturing
+// industry. Everything except Financial Services and Information
+// Technology is treated as manufacturing.
+func (c CompanyInfo) Manufacturing() bool {
+	switch c.Industry {
+	case "Financial Services", "Information Technology":
+		return false
+	default:
+		return true
+	}
+}
 
-// // BySymbol returns the universe entry for symbol.
-// func BySymbol(symbol string) (CompanyInfo, bool) {
-// 	for _, c := range Universe {
-// 		if c.Symbol == symbol {
-// 			return c, true
-// 		}
-// 	}
-// 	return CompanyInfo{}, false
-// }
+// GetCompanyBySymbol returns the company entry for symbol from the
+// companies collection (nil when not found). Exchange is always "BSE"
+// in this universe, so the lookup is keyed on symbol alone.
+func GetCompanyBySymbol(db *mongo.Database, symbol string) (*CompanyInfo, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
+	var co models.Company
+	err := db.Collection(models.ColCompanies).FindOne(ctx, bson.M{"symbol": symbol}).Decode(&co)
+	if errors.Is(err, mongo.ErrNoDocuments) {
+		return nil, nil
+	}
+	if err != nil {
+		return nil, err
+	}
+	return &CompanyInfo{
+		Symbol:   co.Symbol,
+		Exchange: co.Exchange,
+		Name:     co.Name,
+		Industry: co.Industry,
+		Series:   co.Series,
+		ISINCode: co.ISINCode,
+	}, nil
+}

@@ -129,7 +129,7 @@ func (c *Collector) Collect(ctx context.Context, info CompanyInfo, disc *Discove
 
 	out = append(out, c.collectIRIndex(ctx, info, disc, fullFolder, existing)...)
 
-	if info.Manufacturing {
+	if info.Manufacturing() {
 		if pt, err := c.collectProductPages(ctx, info, disc, fullFolder, existing); err != nil {
 			log.Printf("[collect] %s: product pages: %v", info.Symbol, err)
 		} else if pt != nil {

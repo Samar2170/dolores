@@ -57,6 +57,10 @@ func UpsertCompany(db *mongo.Database, info CompanyInfo) (*models.Company, error
 		co = models.Company{
 			Symbol:   info.Symbol,
 			Exchange: info.Exchange,
+			Name:     info.Name,
+			Industry: info.Industry,
+			Series:   info.Series,
+			ISINCode: info.ISINCode,
 		}
 		co.CreatedAt = now()
 		co.UpdatedAt = co.CreatedAt
