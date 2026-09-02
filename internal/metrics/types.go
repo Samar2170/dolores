@@ -26,6 +26,8 @@ package metrics
 
 import (
 	"time"
+
+	"go.mongodb.org/mongo-driver/v2/bson"
 )
 
 // Statements are the tickertape statement rows, aligned per fiscal year end
@@ -87,8 +89,11 @@ type CashflowRow struct {
 }
 
 // KeyMetrics is the document stored per (symbol, reporting) in key_metrics.
+// When the symbol exists in the companies collection, CompanyID links the
+// document to it.
 type KeyMetrics struct {
 	Symbol      string        `bson:"symbol" json:"symbol"`
+	CompanyID   bson.ObjectID `bson:"company_id,omitempty" json:"company_id,omitempty"`
 	Reporting   string        `bson:"reporting" json:"reporting"`
 	SourceDay   string        `bson:"source_day" json:"source_day"`
 	ComputedAt  time.Time     `bson:"computed_at" json:"computed_at"`

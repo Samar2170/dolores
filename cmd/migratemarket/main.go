@@ -21,14 +21,19 @@ package main
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"flag"
 	"fmt"
 	"log"
 	"strings"
 	"time"
 
+	"go.mongodb.org/mongo-driver/v2/bson"
+	"go.mongodb.org/mongo-driver/v2/mongo"
+
 	fetcher_config "dolores/fetcher/config"
 	"dolores/internal/market"
+	"dolores/internal/models"
 	"dolores/internal/store"
 	"dolores/storage"
 )
@@ -103,7 +108,20 @@ func main() {
 				migrated++
 				continue
 			}
-			if err := repo.SaveRaw(ctx, ref.kind, ref.symbol, ref.exchange, ref.day, ref.raw); err != nil {
+			// Link the payload to its company when one exists so migrated
+			// documents join the companies collection.
+			saveRepo := repo
+			var co models.Company
+			err = st.DB.Collection(models.ColCompanies).FindOne(ctx, bson.M{"symbol": ref.symbol}).Decode(&co)
+			switch {
+			case err == nil:
+				saveRepo = repo.WithCompany(co.ID)
+			case errors.Is(err, mongo.ErrNoDocuments):
+				log.Printf("[warn] %s: no company doc, saving unlinked", ref.symbol)
+			default:
+				log.Printf("[warn] %s: company lookup failed: %v", ref.symbol, err)
+			}
+			if err := saveRepo.SaveRaw(ctx, ref.kind, ref.symbol, ref.exchange, ref.day, ref.raw); err != nil {
 				log.Fatalf("save %s/%s: %v", dir.Name, e.Name, err)
 			}
 			log.Printf("[ok] %s/%s -> %s (%s %s)", dir.Name, e.Name, ref.kind, ref.symbol, ref.day)

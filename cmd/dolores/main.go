@@ -80,13 +80,13 @@ commands:
 }
 
 // runAPIData fetches the Alpha Vantage time series + global quote and the
-// IndiaSM stock payload for a symbol by executing the fetcher tools
+// IndiaSM stock payload for a company by executing the fetcher tools
 // (av_time_series_daily, av_global_quote, indiasm_stock), which archive and
-// store each payload.
+// store each payload linked to the company's ID.
 func runAPIData(ctx context.Context, args []string) error {
 	fs := flag.NewFlagSet("api_data", flag.ExitOnError)
 	symbol := fs.String("symbol", "", "stock symbol (required)")
-	exchange := fs.String("exchange", "BSE", "stock exchange code")
+	exchange := fs.String("exchange", "BSE", "stock exchange code (a stored company entry wins)")
 	if err := fs.Parse(args); err != nil {
 		return err
 	}
@@ -107,15 +107,20 @@ func runAPIData(ctx context.Context, args []string) error {
 		return fmt.Errorf("migrate: %w", err)
 	}
 
+	co, err := upsertCompany(st.DB, *symbol, *exchange)
+	if err != nil {
+		return err
+	}
+
 	arch := storage.NewArchivusClient(fetcher_config.ARCHIVUS_API_KEY, fetcher_config.StorageParentFolder())
-	repo := market.NewRepo(st.DB)
+	repo := market.NewRepo(st.DB).WithCompany(co.ID)
 
 	reg := tool.NewRegistry()
 	reg.Register(av.NewTimeSeriesDailyTool(av.New(arch, repo)))
 	reg.Register(av.NewGlobalQuoteTool(av.New(arch, repo)))
 	reg.Register(indiasm.NewStockTool(indiasm.New(arch, repo)))
 
-	quoteArgs, err := json.Marshal(map[string]string{"symbol": *symbol, "exchange": *exchange})
+	quoteArgs, err := json.Marshal(map[string]string{"symbol": co.Symbol, "exchange": co.Exchange})
 	if err != nil {
 		return err
 	}
@@ -133,7 +138,7 @@ func runAPIData(ctx context.Context, args []string) error {
 
 // runTickertape extracts stock data from a saved Tickertape stock page and
 // writes it to a file, archives it to Archivus and stores each section in
-// MongoDB.
+// MongoDB, linked to the company's ID.
 func runTickertape(ctx context.Context, args []string) error {
 	fs := flag.NewFlagSet("tickertape", flag.ExitOnError)
 	symbol := fs.String("symbol", "", "stock symbol (required)")
@@ -165,10 +170,15 @@ func runTickertape(ctx context.Context, args []string) error {
 		return fmt.Errorf("migrate: %w", err)
 	}
 
-	arch := storage.NewArchivusClient(fetcher_config.ARCHIVUS_API_KEY, fetcher_config.StorageParentFolder())
-	repo := market.NewRepo(st.DB)
+	co, err := upsertCompany(st.DB, *symbol, "")
+	if err != nil {
+		return err
+	}
 
-	return tickertape.ExtractToFile(ctx, *symbol, *htmlPath, *outPath, arch, repo)
+	arch := storage.NewArchivusClient(fetcher_config.ARCHIVUS_API_KEY, fetcher_config.StorageParentFolder())
+	repo := market.NewRepo(st.DB).WithCompany(co.ID)
+
+	return tickertape.ExtractToFile(ctx, co.Symbol, *htmlPath, *outPath, arch, repo)
 }
 
 // runKeyMetrics computes key metrics from the stored tickertape financial
@@ -236,11 +246,19 @@ func runResearch(ctx context.Context, args []string) error {
 		fetcher_config.ResearchLLMMaxTokens(),
 	)
 	started := time.Now()
+	// Upsert the company first so every downstream write links to its ID.
 	info, err := research.GetCompanyBySymbol(dbStore.DB, *symbolFilter)
 	if err != nil {
 		return fmt.Errorf("get company by symbol: %w", err)
 	}
-	err = runCompany(llm.WithBudget(ctx, budget), dbStore.DB, hc, lg, col, *info)
+	if info == nil {
+		return fmt.Errorf("research: %s not in companies universe (run importnifty first)", *symbolFilter)
+	}
+	co, err := research.UpsertCompany(dbStore.DB, *info)
+	if err != nil {
+		return fmt.Errorf("upsert company: %w", err)
+	}
+	err = runCompany(llm.WithBudget(ctx, budget), dbStore.DB, hc, lg, col, co)
 	reqs, toks := budget.Snapshot()
 	if err != nil {
 		log.Printf("[company] %s FAILED after %s: %v (llm: %d requests, %d tokens)",
@@ -252,31 +270,52 @@ func runResearch(ctx context.Context, args []string) error {
 	return nil
 }
 
-func runCompany(ctx context.Context, db *mongo.Database, hc *http.Client, lg *llm.Client, col *research.Collector, info research.CompanyInfo) error {
+// upsertCompany resolves the company for symbol and upserts it into the
+// companies collection before any other work. The stored research-universe
+// entry wins when present; otherwise a minimal company is created from
+// symbol+exchange (defaulting to BSE, as in the universe import). All
+// downstream writes link to the returned company's ID.
+func upsertCompany(db *mongo.Database, symbol, exchange string) (*models.Company, error) {
+	info := research.CompanyInfo{Symbol: symbol, Exchange: exchange}
+	found, err := research.GetCompanyBySymbol(db, symbol)
+	if err != nil {
+		return nil, fmt.Errorf("get company by symbol: %w", err)
+	}
+	if found != nil {
+		info = *found
+	} else if info.Exchange == "" {
+		info.Exchange = "BSE"
+	}
 	co, err := research.UpsertCompany(db, info)
 	if err != nil {
-		return fmt.Errorf("upsert company: %w", err)
+		return nil, fmt.Errorf("upsert company: %w", err)
 	}
+	log.Printf("[company] %s (%s) linked as %s", co.Symbol, co.Exchange, co.ID.Hex())
+	return co, nil
+}
+
+func runCompany(ctx context.Context, db *mongo.Database, hc *http.Client, lg *llm.Client, col *research.Collector, co *models.Company) error {
+	info := research.InfoFromCompany(co)
 
 	disc, err := research.DiscoverCompany(ctx, hc, info)
 	if err != nil {
 		return fmt.Errorf("discovery: %w", err)
 	}
 	if err := research.SaveLinks(db, co.ID, disc.OfficialWebsite, disc.IRLink); err != nil {
-		log.Printf("[company] %s: links save failed: %v", info.Symbol, err)
+		log.Printf("[company] %s: links save failed: %v", co.Symbol, err)
 	}
 
 	docs, err := col.Collect(ctx, co.ID, info, disc)
 	if err != nil {
-		log.Printf("[company] %s: collection failed: %v", info.Symbol, err)
+		log.Printf("[company] %s: collection failed: %v", co.Symbol, err)
 	}
-	logSummary(info, docs)
+	logSummary(co, docs)
 
 	sources := docSources(docs)
 
 	for _, segment := range topicSegments {
 		if llm.Exhausted(ctx) {
-			log.Printf("[company] %s: llm budget exhausted - skipping remaining segments", info.Symbol)
+			log.Printf("[company] %s: llm budget exhausted - skipping remaining segments", co.Symbol)
 			break
 		}
 		in := research.ResourceInput{
@@ -288,26 +327,26 @@ func runCompany(ctx context.Context, db *mongo.Database, hc *http.Client, lg *ll
 		}
 		row, err := research.UpsertResourcePending(db, in)
 		if err != nil {
-			log.Printf("[company] %s: row upsert (%s) failed: %v", info.Symbol, segment, err)
+			log.Printf("[company] %s: row upsert (%s) failed: %v", co.Symbol, segment, err)
 			continue
 		}
 
 		payload, xerr := research.ExtractTopics(ctx, lg, docs, segment)
 		switch {
 		case xerr == research.ErrNoText:
-			log.Printf("[company] %s: no text layer for %s (scanned docs?) - left pending", info.Symbol, segment)
+			log.Printf("[company] %s: no text layer for %s (scanned docs?) - left pending", co.Symbol, segment)
 		case xerr != nil:
-			log.Printf("[company] %s: extraction (%s) failed: %v", info.Symbol, segment, xerr)
+			log.Printf("[company] %s: extraction (%s) failed: %v", co.Symbol, segment, xerr)
 		default:
 			if serr := research.SetExtractedData(db, row.ID, payload); serr != nil {
-				log.Printf("[company] %s: storing extraction (%s) failed: %v", info.Symbol, segment, serr)
+				log.Printf("[company] %s: storing extraction (%s) failed: %v", co.Symbol, segment, serr)
 			} else {
-				log.Printf("[company] %s: extracted %s OK", info.Symbol, segment)
+				log.Printf("[company] %s: extracted %s OK", co.Symbol, segment)
 			}
 		}
 	}
 
-	return reviewRowState(db, co.ID, info)
+	return reviewRowState(db, co)
 }
 
 type sourceSummary struct {
@@ -342,24 +381,24 @@ func truncate(s string, n int) string {
 	return s[:n-3] + "..."
 }
 
-func logSummary(info research.CompanyInfo, docs []research.CollectedDoc) {
+func logSummary(co *models.Company, docs []research.CollectedDoc) {
 	for _, d := range docs {
 		rawURL := d.RawDataUrl
 		if len(rawURL) > 60 {
 			rawURL = rawURL[:57] + "..."
 		}
 		log.Printf("[archive] %-9s %-26s %8d bytes -> %s (signed=%t)",
-			info.Symbol, d.FileName, len(d.Bytes), rawURL, d.RawDataUrl != "")
+			co.Symbol, d.FileName, len(d.Bytes), rawURL, d.RawDataUrl != "")
 	}
 }
 
-func reviewRowState(db *mongo.Database, companyID bson.ObjectID, info research.CompanyInfo) error {
+func reviewRowState(db *mongo.Database, co *models.Company) error {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
-	fmt.Printf("\n--- %s resource rows ---\n", info.Symbol)
+	fmt.Printf("\n--- %s resource rows ---\n", co.Symbol)
 	cur, err := db.Collection(models.ColCompanyResources).Find(ctx,
-		bson.M{"company_id": companyID},
+		bson.M{"company_id": co.ID},
 		options.Find().SetSort(bson.M{"analysis_segment": 1}),
 	)
 	if err != nil {

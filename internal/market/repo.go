@@ -60,14 +60,28 @@ type Saver interface {
 	SaveRaw(ctx context.Context, kind, symbol, exchange, day string, raw []byte) error
 }
 
-// Repo archives raw fetcher payloads into MongoDB.
+// Repo archives raw fetcher payloads into MongoDB. When bound to a company
+// (WithCompany), every document it writes is stamped with the company's ID.
 type Repo struct {
-	db *mongo.Database
+	db        *mongo.Database
+	companyID bson.ObjectID
 }
 
 // NewRepo creates a Repo writing to the given database.
 func NewRepo(db *mongo.Database) *Repo {
 	return &Repo{db: db}
+}
+
+// WithCompany returns a copy of the repo bound to one company. Payloads
+// saved through the copy carry company_id, linking every market document
+// back to the companies collection.
+func (r *Repo) WithCompany(companyID bson.ObjectID) *Repo {
+	if r == nil {
+		return nil
+	}
+	bound := *r
+	bound.companyID = companyID
+	return &bound
 }
 
 // Migrate ensures the market collections and their unique indexes exist.
@@ -107,7 +121,8 @@ func Migrate(db *mongo.Database) error {
 
 // SaveRaw upserts one raw payload keyed by (symbol/name, day). kind selects
 // the collection; symbol is the Alpha Vantage symbol or the IndiaSM company
-// name; exchange is only meaningful for Alpha Vantage payloads.
+// name; exchange is only meaningful for Alpha Vantage payloads. A repo bound
+// via WithCompany also stamps the payload with the company's ID.
 func (r *Repo) SaveRaw(ctx context.Context, kind, symbol, exchange, day string, raw []byte) error {
 	if r == nil || r.db == nil {
 		return fmt.Errorf("market: repo not initialised")
@@ -147,6 +162,9 @@ func (r *Repo) SaveRaw(ctx context.Context, kind, symbol, exchange, day string, 
 	}
 
 	set = bson.M{"payload": payload, "fetched_at": now()}
+	if !r.companyID.IsZero() {
+		set["company_id"] = r.companyID
+	}
 	_, err = r.db.Collection(coll).UpdateOne(ctx, filter,
 		bson.M{"$set": set, "$setOnInsert": bson.M{"created_at": now()}},
 		options.UpdateOne().SetUpsert(true),
