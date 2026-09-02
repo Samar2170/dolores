@@ -225,7 +225,7 @@ func runResearch(ctx context.Context, args []string) error {
 		return fmt.Errorf("migrate: %w", err)
 	}
 	lg := llm.NewClient(fetcher_config.OPENROUTER_API_KEY, fetcher_config.Config.ALLOWED_MODELS)
-	col := research.NewCollector(hc, arch)
+	col := research.NewCollector(hc, arch, dbStore.DB)
 
 	if *symbolFilter == "" {
 		return nil
@@ -266,7 +266,7 @@ func runCompany(ctx context.Context, db *mongo.Database, hc *http.Client, arch *
 		log.Printf("[company] %s: links save failed: %v", info.Symbol, err)
 	}
 
-	docs, err := col.Collect(ctx, info, disc)
+	docs, err := col.Collect(ctx, co.ID, info, disc)
 	if err != nil {
 		log.Printf("[company] %s: collection failed: %v", info.Symbol, err)
 	}

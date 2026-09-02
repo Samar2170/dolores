@@ -17,6 +17,7 @@ const (
 	ColCompanies        = "companies"
 	ColCompanyLinks     = "company_links"
 	ColCompanyResources = "company_research_resources"
+	ColAnalysisFiles    = "analysis_files"
 )
 
 type BaseModel struct {
@@ -51,4 +52,20 @@ type CompanyResearchResource struct {
 	RawDataUrl           string        `bson:"raw_data_url" json:"raw_data_url"`
 	// extracted data is stored as a JSON document
 	ExtractedData bson.M `bson:"extracted_data,omitempty" json:"extracted_data,omitempty"`
+}
+
+// AnalysisFile holds the metadata of one file fetched during research and
+// archived into the company's research folder. File contents stay in Archivus.
+type AnalysisFile struct {
+	BaseModel    `bson:",inline"`
+	CompanyID    bson.ObjectID `bson:"company_id" json:"company_id"`
+	Symbol       string        `bson:"symbol" json:"symbol"`
+	Kind         string        `bson:"kind" json:"kind"`
+	Title        string        `bson:"title,omitempty" json:"title,omitempty"`
+	SourceURL    string        `bson:"source_url" json:"source_url"`
+	FY           string        `bson:"fy,omitempty" json:"fy,omitempty"`
+	FileName     string        `bson:"file_name" json:"file_name"`
+	ArchivusPath string        `bson:"archivus_path" json:"archivus_path"`
+	RawDataUrl   string        `bson:"raw_data_url,omitempty" json:"raw_data_url,omitempty"`
+	SizeBytes    int64         `bson:"size_bytes" json:"size_bytes"`
 }

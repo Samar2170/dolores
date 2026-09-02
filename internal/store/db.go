@@ -113,6 +113,14 @@ func (s *Store) Migrate(_ ...interface{}) error {
 		return err
 	}
 
+	_, err = s.DB.Collection(models.ColAnalysisFiles).Indexes().CreateOne(ctx, mongo.IndexModel{
+		Keys:    bson.D{{Key: "company_id", Value: 1}, {Key: "file_name", Value: 1}},
+		Options: options.Index().SetUnique(true).SetName("idx_analysis_files_company_file"),
+	})
+	if err != nil {
+		return err
+	}
+
 	if err := market.Migrate(s.DB); err != nil {
 		return err
 	}

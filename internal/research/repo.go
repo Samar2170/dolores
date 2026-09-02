@@ -42,6 +42,14 @@ func MigrateCompanyModels(db *mongo.Database) error {
 		Keys:    bson.D{{Key: "company_id", Value: 1}, {Key: "analysis_segment", Value: 1}},
 		Options: options.Index().SetUnique(true).SetName("idx_crr_company_segment"),
 	})
+	if err != nil {
+		return err
+	}
+
+	_, err = db.Collection(models.ColAnalysisFiles).Indexes().CreateOne(context.Background(), mongo.IndexModel{
+		Keys:    bson.D{{Key: "company_id", Value: 1}, {Key: "file_name", Value: 1}},
+		Options: options.Index().SetUnique(true).SetName("idx_analysis_files_company_file"),
+	})
 	return err
 }
 
@@ -149,6 +157,39 @@ func UpsertResourcePending(db *mongo.Database, in ResourceInput) (*models.Compan
 		r.RawDataUrl = in.RawDataUrl
 		return &r, nil
 	}
+}
+
+// SaveAnalysisFiles upserts the metadata of files fetched during research into
+// the analysis_files collection, keyed on (company_id, file_name).
+func SaveAnalysisFiles(db *mongo.Database, companyID bson.ObjectID, symbol string, docs []CollectedDoc) error {
+	if len(docs) == 0 {
+		return nil
+	}
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
+	writes := make([]mongo.WriteModel, 0, len(docs))
+	for _, d := range docs {
+		writes = append(writes, mongo.NewUpdateOneModel().
+			SetFilter(bson.M{"company_id": companyID, "file_name": d.FileName}).
+			SetUpdate(bson.M{
+				"$set": bson.M{
+					"symbol":        symbol,
+					"kind":          d.Kind,
+					"title":         d.Title,
+					"source_url":    d.SourceURL,
+					"fy":            d.FY,
+					"archivus_path": d.ArchivusPath,
+					"raw_data_url":  d.RawDataUrl,
+					"size_bytes":    len(d.Bytes),
+					"updated_at":    now(),
+				},
+				"$setOnInsert": bson.M{"created_at": now()},
+			}).
+			SetUpsert(true))
+	}
+	_, err := db.Collection(models.ColAnalysisFiles).BulkWrite(ctx, writes)
+	return err
 }
 
 // SetExtractedData stores the JSON payload as a document on an existing resource.

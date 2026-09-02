@@ -10,6 +10,8 @@ import (
 	"strings"
 	"time"
 
+	"go.mongodb.org/mongo-driver/v2/bson"
+	"go.mongodb.org/mongo-driver/v2/mongo"
 	"golang.org/x/net/html"
 
 	"dolores/storage"
@@ -36,10 +38,11 @@ type CollectedDoc struct {
 type Collector struct {
 	hc    *http.Client
 	store *storage.ArchivusClient
+	db    *mongo.Database
 }
 
-func NewCollector(hc *http.Client, store *storage.ArchivusClient) *Collector {
-	return &Collector{hc: hc, store: store}
+func NewCollector(hc *http.Client, store *storage.ArchivusClient, db *mongo.Database) *Collector {
+	return &Collector{hc: hc, store: store, db: db}
 }
 
 var unsafeNameRe = regexp.MustCompile(`[^A-Za-z0-9._-]+`)
@@ -49,9 +52,10 @@ func sanitizeName(s string) string {
 }
 
 // Collect downloads the selected discovery candidates plus auxiliary material,
-// uploads everything missing into <SYMBOL>/research/, and returns in-memory
+// uploads everything missing into <SYMBOL>/research/, records each file's
+// metadata into the analysis_files collection, and returns in-memory
 // copies ready for extraction.
-func (c *Collector) Collect(ctx context.Context, info CompanyInfo, disc *DiscoveryResult) ([]CollectedDoc, error) {
+func (c *Collector) Collect(ctx context.Context, companyID bson.ObjectID, info CompanyInfo, disc *DiscoveryResult) ([]CollectedDoc, error) {
 	const subFolder = "research"
 	fullFolder := info.Symbol + "/" + subFolder
 
@@ -146,6 +150,12 @@ func (c *Collector) Collect(ctx context.Context, info CompanyInfo, disc *Discove
 			if fi, ok := byName[out[i].FileName]; ok && fi.SignedURL != "" {
 				out[i].RawDataUrl = fi.SignedURL
 			}
+		}
+	}
+
+	if c.db != nil {
+		if err := SaveAnalysisFiles(c.db, companyID, info.Symbol, out); err != nil {
+			log.Printf("[collect] %s: analysis_files save failed: %v", info.Symbol, err)
 		}
 	}
 	return out, nil
