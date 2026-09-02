@@ -30,6 +30,7 @@ import (
 	"dolores/internal/models"
 	"dolores/internal/research"
 	"dolores/internal/store"
+	"dolores/internal/tool"
 	"dolores/storage"
 )
 
@@ -79,7 +80,9 @@ commands:
 }
 
 // runAPIData fetches the Alpha Vantage time series + global quote and the
-// IndiaSM stock payload for a symbol, archiving and storing each payload.
+// IndiaSM stock payload for a symbol by executing the fetcher tools
+// (av_time_series_daily, av_global_quote, indiasm_stock), which archive and
+// store each payload.
 func runAPIData(ctx context.Context, args []string) error {
 	fs := flag.NewFlagSet("api_data", flag.ExitOnError)
 	symbol := fs.String("symbol", "", "stock symbol (required)")
@@ -106,20 +109,24 @@ func runAPIData(ctx context.Context, args []string) error {
 
 	arch := storage.NewArchivusClient(fetcher_config.ARCHIVUS_API_KEY, fetcher_config.StorageParentFolder())
 	repo := market.NewRepo(st.DB)
-	avClient := av.New(arch, repo)
-	indiasmClient := indiasm.New(arch, repo)
 
-	if err := arch.EnsureFolder(*symbol); err != nil {
-		return fmt.Errorf("ensure folder: %w", err)
+	reg := tool.NewRegistry()
+	reg.Register(av.NewTimeSeriesDailyTool(av.New(arch, repo)))
+	reg.Register(av.NewGlobalQuoteTool(av.New(arch, repo)))
+	reg.Register(indiasm.NewStockTool(indiasm.New(arch, repo)))
+
+	quoteArgs, err := json.Marshal(map[string]string{"symbol": *symbol, "exchange": *exchange})
+	if err != nil {
+		return err
 	}
-	if _, err := avClient.TimeSeriesDaily(ctx, *symbol, *exchange); err != nil {
-		return fmt.Errorf("time series daily: %w", err)
-	}
-	if _, err := avClient.GlobalQuote(ctx, *symbol, *exchange); err != nil {
-		return fmt.Errorf("global quote: %w", err)
-	}
-	if _, err := indiasmClient.Stock(ctx, *symbol); err != nil {
-		return fmt.Errorf("indiasm stock: %w", err)
+	for _, name := range []string{av.ToolTimeSeriesDaily, av.ToolGlobalQuote, indiasm.ToolStock} {
+		t, err := reg.Get(name)
+		if err != nil {
+			return err
+		}
+		if err := t.Execute(ctx, quoteArgs); err != nil {
+			return err
+		}
 	}
 	return nil
 }
@@ -165,8 +172,9 @@ func runTickertape(ctx context.Context, args []string) error {
 }
 
 // runKeyMetrics computes key metrics from the stored tickertape financial
-// statements and upserts them into the key_metrics collection, for one symbol
-// or for every symbol with financials.
+// statements and upserts them into the key_metrics collection by executing
+// the metrics_compute tool, for one symbol or for every symbol with
+// financials.
 func runKeyMetrics(ctx context.Context, args []string) error {
 	fs := flag.NewFlagSet("key_metrics", flag.ExitOnError)
 	symbol := fs.String("symbol", "", "compute for one symbol (default: all symbols with tickertape financials)")
@@ -183,26 +191,11 @@ func runKeyMetrics(ctx context.Context, args []string) error {
 		return fmt.Errorf("migrate: %w", err)
 	}
 
-	if *symbol != "" {
-		doc, err := metrics.ComputeSymbol(ctx, st.DB, *symbol)
-		if err != nil {
-			return fmt.Errorf("key_metrics: %w", err)
-		}
-		if doc == nil {
-			log.Printf("[key_metrics] %s: no tickertape financial statements stored", *symbol)
-			return nil
-		}
-		log.Printf("[key_metrics] %s stored: %s-%s (%d years, %s)",
-			doc.Symbol, doc.FirstFY, doc.LastFY, doc.YearsCount, doc.Reporting)
-		return nil
-	}
-
-	n, err := metrics.ComputeAll(ctx, st.DB)
+	computeArgs, err := json.Marshal(metrics.ComputeArgs{Symbol: *symbol})
 	if err != nil {
-		return fmt.Errorf("key_metrics: %w", err)
+		return err
 	}
-	log.Printf("[key_metrics] %d symbols stored", n)
-	return nil
+	return metrics.NewComputeTool(st.DB).Execute(ctx, computeArgs)
 }
 
 // runResearch runs the company research pipeline over the research universe,

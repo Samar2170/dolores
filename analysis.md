@@ -1,38 +1,13 @@
-#### 
-1. Margins
-2. Growth (Topline,bottomline, EBITDA) DOL
-3. Key Ratios (ROE, ROCE, Debt to Equity, Current Ratio, RONW)
-4. Product Analysis, Market share? Moat? Input risks?
-5. Management Analysis (KMP risks, History)
+#### Architecture
+Get AV DAta -> Add Tickertape data -> Extract -> Calculate key metrics -> (Product, Revenue segmentation, Market share, Input risk research) -> Other research -> Audit previous step -> Create Pointers -> Create Report
 
 
 
 Growth
-Revenue / topline CAGR
-EBITDA / EBIT growth
-PAT / EPS growth
 Volume vs price-led growth
-DOL / operating leverage
 Guidance vs actual growth
-Margins & Profitability
-Gross margin
-EBITDA / EBIT margin
-Net margin
-Margin trend + stability
-ROE / ROCE / RONW
-ROIC if you can calculate it reliably
-Balance Sheet & Financial Health
-Debt/equity
-Net debt/EBITDA
-Interest coverage
-Current ratio
-Cash conversion
-Working-capital cycle
-Receivables / inventory / payable trends
-Free cash flow
-CFO vs PAT
-Business / Product Analysis
-Products & revenue segmentation
+
+
 Market size / TAM
 Market share + trajectory
 Competitive landscape
@@ -41,6 +16,7 @@ Customer concentration
 Geographic concentration
 Moat / competitive advantages
 Input-cost exposure
+
 Supplier/customer bargaining power
 Regulatory risks
 Disruption/substitution risk
@@ -55,6 +31,7 @@ Acquisitions / buybacks / dividends
 Management guidance vs actual delivery
 Compensation vs company performance
 Pledging / dilution
+
 Cash Flow & Capital Allocation ← I'd make this its own category
 CFO
 Capex
@@ -64,15 +41,14 @@ ROIC on incremental capital
 Where management is deploying cash
 Debt repayment vs acquisitions vs dividends
 Valuation ← big one missing from your list
-P/E
-EV/EBITDA
-P/B
-PEG
+
+
 FCF yield
 Historical valuation bands
 Peer valuation
 DCF / intrinsic value
 Growth assumptions required to justify current price
+
 Risk Analysis
 Business risks
 Financial risks
@@ -81,12 +57,27 @@ Commodity/input risks
 FX risk
 Customer concentration
 Governance risks
+
 Bull/base/bear scenarios
 Market / Price Behaviour
 Relative performance vs index
 Volatility
 Drawdowns
-Volume anomalies
 Institutional/promoter buying/selling
-Not as important as fundamentals, but useful as a separate layer.
-I'd structure the A
+
+
+### Hard data analysis
+| Data point     |  Source    | Analysis  | 
+| moving averages| indiasm_stock | time to buy, trend |
+| mgmtEffetiveness | indiasm_stock | get an idea of efficiency, how business is being done, any red flags? |
+| margins       | indiasm_stock    | efficiency, good or no? |
+| financial strength | indiasm_stock | financial position |
+| valuation | indiasm_stock | decent/ over/under  |
+| growth | indiasm_stock | growth, trend, volatility, drawdowns, etc (degree of operating leverage) |
+| analyst view | indiasm_stock | sentiment |
+| shareholding pattern | indiasm_stock | shareholding pattern |
+
+| marings, returns over years | key_metrics | marign stability etc |
+
+| investor presentation | investor_presentation file in archivus | business summary, products etc., Revenue/Profit/Asset segmentation, customer profile, geographic profile, competitive landscape. |
+
