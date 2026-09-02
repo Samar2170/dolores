@@ -81,3 +81,31 @@ Institutional/promoter buying/selling
 
 | investor presentation | investor_presentation file in archivus | business summary, products etc., Revenue/Profit/Asset segmentation, customer profile, geographic profile, competitive landscape. |
 
+### New architecture
+
+```mermaid
+
+    A[Company Symbol + Exchange] --> B[Fetch API Data]
+
+    B --> C[Alpha Vantage]
+    B --> D[IndiaSM]
+
+    C --> E[Save Raw API Data]
+    D --> E
+
+    E --> F[Calculate Margins]
+
+    F --> G[Save Calculated Metrics]
+
+    G --> H[Current Research]
+
+    H --> H1[Products]
+    H --> H2[Input / Raw Material Risks]
+    H --> H3[Market Share]
+    H --> H4[Revenue Segmentation]
+
+    H1 --> I[Save Research]
+    H2 --> I
+    H3 --> I
+    H4 --> I
+```

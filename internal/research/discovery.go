@@ -82,8 +82,7 @@ func DiscoverCompany(ctx context.Context, client *http.Client, info CompanyInfo)
 		scanAnnualReportPages(ctx, client, officialURL(res), res)
 	}
 	if countKind(res.Docs, docAnnualReport) == 0 {
-		for _, h := range ddgSearch(ctx, client,
-			fmt.Sprintf("nsearchives.nseindia.com %s annual report pdf", info.Name)) {
+		for _, h := range ddgSearch(ctx, client, fmt.Sprintf("nsearchives.nseindia.com %s annual report pdf", info.Name)) {
 			if !strings.Contains(h.URL, "nsearchives.nseindia.com") {
 				continue
 			}

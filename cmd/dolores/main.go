@@ -199,7 +199,7 @@ func runKeyMetrics(ctx context.Context, args []string) error {
 }
 
 // runResearch runs the company research pipeline over the research universe,
-// collecting documents, extracting topic segments and market share data.
+// collecting documents and extracting topic segments.
 func runResearch(ctx context.Context, args []string) error {
 	fs := flag.NewFlagSet("research", flag.ExitOnError)
 	symbolFilter := fs.String("symbol", "", "process only this symbol")
@@ -240,7 +240,7 @@ func runResearch(ctx context.Context, args []string) error {
 	if err != nil {
 		return fmt.Errorf("get company by symbol: %w", err)
 	}
-	err = runCompany(llm.WithBudget(ctx, budget), dbStore.DB, hc, arch, lg, col, *info)
+	err = runCompany(llm.WithBudget(ctx, budget), dbStore.DB, hc, lg, col, *info)
 	reqs, toks := budget.Snapshot()
 	if err != nil {
 		log.Printf("[company] %s FAILED after %s: %v (llm: %d requests, %d tokens)",
@@ -252,7 +252,7 @@ func runResearch(ctx context.Context, args []string) error {
 	return nil
 }
 
-func runCompany(ctx context.Context, db *mongo.Database, hc *http.Client, arch *storage.ArchivusClient, lg *llm.Client, col *research.Collector, info research.CompanyInfo) error {
+func runCompany(ctx context.Context, db *mongo.Database, hc *http.Client, lg *llm.Client, col *research.Collector, info research.CompanyInfo) error {
 	co, err := research.UpsertCompany(db, info)
 	if err != nil {
 		return fmt.Errorf("upsert company: %w", err)
@@ -276,7 +276,7 @@ func runCompany(ctx context.Context, db *mongo.Database, hc *http.Client, arch *
 
 	for _, segment := range topicSegments {
 		if llm.Exhausted(ctx) {
-			log.Printf("[company] %s: llm budget exhausted - skipping remaining segments + market share", info.Symbol)
+			log.Printf("[company] %s: llm budget exhausted - skipping remaining segments", info.Symbol)
 			break
 		}
 		in := research.ResourceInput{
@@ -307,12 +307,6 @@ func runCompany(ctx context.Context, db *mongo.Database, hc *http.Client, arch *
 		}
 	}
 
-	if llm.Exhausted(ctx) {
-		log.Printf("[company] %s: llm budget exhausted - skipping market share", info.Symbol)
-		return reviewRowState(db, co.ID, info)
-	}
-	marketShare(ctx, db, lg, arch, info, co.ID)
-
 	return reviewRowState(db, co.ID, info)
 }
 
@@ -327,7 +321,7 @@ func docSources(docs []research.CollectedDoc) sourceSummary {
 	var urls []string
 	raw := ""
 	for _, d := range docs {
-		if d.Kind == "ir_index_page" || d.Kind == "market_share_source" {
+		if d.Kind == "ir_index_page" {
 			continue
 		}
 		names = append(names, d.Title+" ["+d.Kind+"]")
@@ -357,54 +351,6 @@ func logSummary(info research.CompanyInfo, docs []research.CollectedDoc) {
 		log.Printf("[archive] %-9s %-26s %8d bytes -> %s (signed=%t)",
 			info.Symbol, d.FileName, len(d.Bytes), rawURL, d.RawDataUrl != "")
 	}
-}
-
-// marketShare runs the grounded market-share pass when product categories are
-// already known from the products row.
-func marketShare(ctx context.Context, db *mongo.Database, lg *llm.Client, arch *storage.ArchivusClient, info research.CompanyInfo, companyID bson.ObjectID) {
-	payloadBytes, err := research.GetResourceJSON(db, companyID, models.SegmentProducts)
-	if err != nil || payloadBytes == nil {
-		log.Printf("[market] %s skipped: products not extracted yet", info.Symbol)
-		return
-	}
-	var p research.ExtractedProducts
-	if json.Unmarshal(payloadBytes, &p) != nil {
-		log.Printf("[market] %s skipped: products payload unreadable", info.Symbol)
-		return
-	}
-	var cats []string
-	for _, c := range p.ProductCategories {
-		if strings.TrimSpace(c.Name) != "" {
-			cats = append(cats, c.Name)
-		}
-		if len(cats) >= 3 {
-			break
-		}
-	}
-	if len(cats) == 0 {
-		log.Printf("[market] %s skipped: no categories in products payload", info.Symbol)
-		return
-	}
-
-	payload, err := research.ResearchMarketShare(ctx, &http.Client{Timeout: 90 * time.Second}, arch, lg, info, cats)
-	if err != nil {
-		log.Printf("[market] %s failed: %v", info.Symbol, err)
-		return
-	}
-	row, err := research.UpsertResourcePending(db, research.ResourceInput{
-		CompanyID: companyID,
-		Segment:   models.SegmentMarketShare,
-		Source:    "LLM web research with cited sources (" + strings.Join(cats, ", ") + ")",
-	})
-	if err != nil {
-		log.Printf("[market] %s: row upsert failed: %v", info.Symbol, err)
-		return
-	}
-	if err := research.SetExtractedData(db, row.ID, payload); err != nil {
-		log.Printf("[market] %s: storing market data failed: %v", info.Symbol, err)
-		return
-	}
-	log.Printf("[market] %s stored", info.Symbol)
 }
 
 func reviewRowState(db *mongo.Database, companyID bson.ObjectID, info research.CompanyInfo) error {
