@@ -1,8 +1,10 @@
-// Command dolores is the CLI entry point. It exposes three subcommands:
+// Command dolores is the CLI entry point. It exposes these subcommands:
 //
 //	api_data    fetch market API payloads (Alpha Vantage + IndiaSM) for a symbol
 //	tickertape  extract stock data from a saved Tickertape page HTML
 //	research    run the company research pipeline over the universe
+//	key_metrics compute key metrics from stored tickertape financials
+//	files       list or download a company's archived files from Archivus
 package main
 
 import (
@@ -24,6 +26,7 @@ import (
 	fetcher_config "dolores/fetcher/config"
 	"dolores/fetcher/indiasm"
 	"dolores/fetcher/tickertape"
+	"dolores/internal/files"
 	"dolores/internal/llm"
 	"dolores/internal/market"
 	"dolores/internal/metrics"
@@ -58,6 +61,8 @@ func main() {
 		err = runResearch(ctx, os.Args[2:])
 	case "key_metrics":
 		err = runKeyMetrics(ctx, os.Args[2:])
+	case "files":
+		err = runCompanyFiles(ctx, os.Args[2:])
 	default:
 		usage()
 	}
@@ -75,7 +80,8 @@ commands:
   api_data      fetch market API payloads (Alpha Vantage + IndiaSM) for a symbol
   tickertape    extract stock data from a saved Tickertape page HTML
   research      run the company research pipeline (use -symbol to filter)
-  key_metrics   compute key metrics from stored tickertape financials into key_metrics`)
+  key_metrics   compute key metrics from stored tickertape financials into key_metrics
+  files         list or download a company's archived files from Archivus`)
 	os.Exit(2)
 }
 
@@ -206,6 +212,47 @@ func runKeyMetrics(ctx context.Context, args []string) error {
 		return err
 	}
 	return metrics.NewComputeTool(st.DB).Execute(ctx, computeArgs)
+}
+
+// runCompanyFiles lists or downloads a company's archived Archivus files by
+// executing the archivus_company_files tool.
+func runCompanyFiles(ctx context.Context, args []string) error {
+	fs := flag.NewFlagSet("files", flag.ExitOnError)
+	symbol := fs.String("symbol", "", "stock symbol (required)")
+	folder := fs.String("folder", "", "subfolder below <SYMBOL>/ (e.g. research)")
+	file := fs.String("file", "", "exact file name to download (default: list the folder)")
+	out := fs.String("out", "", "download destination path (default: the file name)")
+	if err := fs.Parse(args); err != nil {
+		return err
+	}
+	if *symbol == "" {
+		return fmt.Errorf("files: -symbol is required")
+	}
+
+	if err := fetcher_config.LoadDefaultConfigs(); err != nil {
+		return fmt.Errorf("config: %w", err)
+	}
+
+	st, err := store.GetStore(".")
+	if err != nil {
+		return fmt.Errorf("db: %w", err)
+	}
+	defer st.Close()
+	if err := st.Migrate(); err != nil {
+		return fmt.Errorf("migrate: %w", err)
+	}
+
+	arch := storage.NewArchivusClient(fetcher_config.ARCHIVUS_API_KEY, fetcher_config.StorageParentFolder()).WithTimeout(5 * time.Minute)
+	toolArgs, err := json.Marshal(files.FilesArgs{
+		Symbol: *symbol,
+		Folder: *folder,
+		File:   *file,
+		Out:    *out,
+	})
+	if err != nil {
+		return err
+	}
+	return files.NewCompanyFilesTool(arch, st.DB).Execute(ctx, toolArgs)
 }
 
 // runResearch runs the company research pipeline over the research universe,
