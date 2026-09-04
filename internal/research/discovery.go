@@ -10,6 +10,7 @@ import (
 	"sort"
 	"strconv"
 	"strings"
+	"time"
 
 	"golang.org/x/net/html"
 )
@@ -27,6 +28,14 @@ var blockedHostFragments = []string{
 	"sustainabilityreports.com", "intracen.org", "stockssena.com", "kotakuat",
 	"google.", "duckduckgo.com", "hdfcfund.com", "homeloans.hdfc",
 	"welspuninvestments.com", "welspunliving.com", "welspun.com", "kidfl.kotak.com",
+}
+
+// exchangeHostFragments are stock-exchange hosts. They are never the
+// company's own site (the query terms alone make them rank high), but
+// exchange-hosted filings remain legitimate document sources, so they are
+// only excluded from official-site picking, not from document discovery.
+var exchangeHostFragments = []string{
+	"bseindia.com", "nseindia.com",
 }
 
 var irGuessPaths = []string{
@@ -64,10 +73,19 @@ type anchor struct{ href, text string }
 func DiscoverCompany(ctx context.Context, client *http.Client, info CompanyInfo) (*DiscoveryResult, error) {
 	res := &DiscoveryResult{}
 
-	hits := ddgSearch(ctx, client, fmt.Sprintf("%s %s investor relations annual report pdf", info.Name, info.Exchange))
+	// Every search needs a company name; universe rows without one fall back
+	// to the symbol (works for brand-like symbols) and say so loudly.
+	name := strings.TrimSpace(info.Name)
+	if name == "" {
+		name = info.Symbol
+		log.Printf("[discover] %s: company has no name in the universe - searching by symbol (re-run importnifty)", info.Symbol)
+	}
+	tokens := nameTokens(name)
+
+	hits := ddgSearch(ctx, client, fmt.Sprintf("%s %s investor relations annual report pdf", name, info.Exchange))
 	res.Issues = append(res.Issues, fmt.Sprintf("search hits=%d", len(hits)))
 
-	official := pickOfficialHost(hits, info.Name)
+	official := pickOfficialHost(hits, tokens)
 	if official == "" {
 		return res, fmt.Errorf("no official site found for %s (%s)", info.Name, info.Symbol)
 	}
@@ -82,12 +100,17 @@ func DiscoverCompany(ctx context.Context, client *http.Client, info CompanyInfo)
 		scanAnnualReportPages(ctx, client, officialURL(res), res)
 	}
 	if countKind(res.Docs, docAnnualReport) == 0 {
-		for _, h := range ddgSearch(ctx, client, fmt.Sprintf("nsearchives.nseindia.com %s annual report pdf", info.Name)) {
+		for _, h := range ddgSearch(ctx, client, fmt.Sprintf("nsearchives.nseindia.com %s annual report pdf", name)) {
 			if !strings.Contains(h.URL, "nsearchives.nseindia.com") {
 				continue
 			}
 			kind := classifyDoc(h.Title + " " + h.URL)
 			if kind == "" {
+				continue
+			}
+			// Exchange archives host every listed company's filings; keep a
+			// hit only when the company name appears in its title or URL.
+			if !mentionsName(h, tokens) {
 				continue
 			}
 			addDoc(res, DocCandidate{URL: h.URL, Title: cleanTitle(h.Title), Kind: kind,
@@ -98,11 +121,14 @@ func DiscoverCompany(ctx context.Context, client *http.Client, info CompanyInfo)
 	if countKind(res.Docs, docAnnualReport) == 0 || countKind(res.Docs, docInvestorPresentation) == 0 {
 		for _, q := range []string{
 			fmt.Sprintf("site:%s annual report filetype:pdf", hostOnly(official)),
-			fmt.Sprintf("%s latest investor presentation filetype:pdf %s", info.Name, info.Exchange),
+			fmt.Sprintf("%s latest investor presentation filetype:pdf %s", name, info.Exchange),
 		} {
 			for _, h := range ddgSearch(ctx, client, q) {
 				kind := classifyDoc(h.Title + " " + h.URL)
 				if kind == "" {
+					continue
+				}
+				if !mentionsName(h, tokens) {
 					continue
 				}
 				addDoc(res, DocCandidate{URL: h.URL, Title: cleanTitle(h.Title), Kind: kind,
@@ -119,6 +145,24 @@ func DiscoverCompany(ctx context.Context, client *http.Client, info CompanyInfo)
 }
 
 func ddgSearch(ctx context.Context, client *http.Client, query string) []searchHit {
+	for attempt := 1; attempt <= 2; attempt++ {
+		if attempt > 1 {
+			select {
+			case <-ctx.Done():
+				return nil
+			case <-time.After(2 * time.Second):
+			}
+		}
+		hits := ddgSearchOnce(ctx, client, query)
+		if len(hits) > 0 {
+			return hits
+		}
+		log.Printf("[discover] search %q returned no hits (attempt %d/2)", query, attempt)
+	}
+	return nil
+}
+
+func ddgSearchOnce(ctx context.Context, client *http.Client, query string) []searchHit {
 	body, ctype, err := FetchHTTP(ctx, client, ddgEndpoint+url.QueryEscape(query), 4<<20)
 	if err != nil {
 		log.Printf("[discover] search failed for %q: %v", query, err)
@@ -126,6 +170,11 @@ func ddgSearch(ctx context.Context, client *http.Client, query string) []searchH
 	}
 	if !strings.Contains(ctype, "text/html") {
 		log.Printf("[discover] search non-html response (%s) for %q", ctype, query)
+		return nil
+	}
+	low := strings.ToLower(string(body))
+	if strings.Contains(low, "anomaly") || strings.Contains(low, "captcha") {
+		log.Printf("[discover] search challenge page (rate limited?) for %q", query)
 		return nil
 	}
 
@@ -179,12 +228,11 @@ func nodeText(n *html.Node) string {
 	return strings.TrimSpace(sb.String())
 }
 
-func pickOfficialHost(hits []searchHit, name string) string {
-	tokens := nameTokens(name)
+func pickOfficialHost(hits []searchHit, tokens map[string]bool) string {
 	best, bestScore, bestLen := "", -1, 1<<30
 	for _, h := range hits {
 		host := hostOnly(h.URL)
-		if host == "" || isBlockedHost(host) {
+		if host == "" || isBlockedHost(host) || isExchangeHost(host) {
 			continue
 		}
 		score := 0
@@ -193,6 +241,12 @@ func pickOfficialHost(hits []searchHit, name string) string {
 				score++
 			}
 		}
+		// The host must carry at least one company-name token: results that
+		// merely echo the query terms (exchanges, aggregators) are not the
+		// company's own site.
+		if score == 0 {
+			continue
+		}
 		full := canonicalSiteURL(h.URL)
 		if full == "" {
 			continue
@@ -200,7 +254,7 @@ func pickOfficialHost(hits []searchHit, name string) string {
 		switch {
 		case score > bestScore:
 			best, bestScore, bestLen = full, score, len(host)
-		case score == bestScore && score > 0 && len(host) < bestLen:
+		case score == bestScore && len(host) < bestLen:
 			best, bestScore, bestLen = full, score, len(host)
 		}
 	}
@@ -244,6 +298,28 @@ func isBlockedHost(host string) bool {
 	low := strings.ToLower(host)
 	for _, b := range blockedHostFragments {
 		if strings.Contains(low, b) {
+			return true
+		}
+	}
+	return false
+}
+
+func isExchangeHost(host string) bool {
+	low := strings.ToLower(host)
+	for _, b := range exchangeHostFragments {
+		if strings.Contains(low, b) {
+			return true
+		}
+	}
+	return false
+}
+
+// mentionsName reports whether a search hit carries at least one company-name
+// token in its title or URL.
+func mentionsName(h searchHit, tokens map[string]bool) bool {
+	s := strings.ToLower(h.Title + " " + h.URL)
+	for t := range tokens {
+		if strings.Contains(s, t) {
 			return true
 		}
 	}
@@ -307,7 +383,12 @@ func pathDepth(rawURL string) int {
 }
 
 func guessIRPath(ctx context.Context, client *http.Client, official string) string {
-	for _, p := range irGuessPaths {
+	// Conventional paths only, capped so a hanging site cannot stall the
+	// pipeline for minutes (each probe costs up to one client timeout).
+	for i, p := range irGuessPaths {
+		if i >= 4 {
+			break
+		}
 		candidate := strings.TrimRight(official, "/") + p
 		body, _, err := FetchHTTP(ctx, client, candidate, 512<<10)
 		if err != nil {

@@ -355,7 +355,10 @@ func runResearch(ctx context.Context, args []string) error {
 		return fmt.Errorf("config: %w", err)
 	}
 
-	hc := research.NewBrowserClient(90 * time.Second)
+	// Two-tier HTTP clients: patient for document downloads, snappy for
+	// HTML/search/IR-path probes so a hanging site cannot stall the run.
+	hcWeb := research.NewBrowserClient(45 * time.Second)
+	hcDocs := research.NewBrowserClient(120 * time.Second)
 	arch := storage.NewArchivusClient(
 		fetcher_config.ARCHIVUS_API_KEY,
 		fetcher_config.StorageParentFolder(),
@@ -369,7 +372,7 @@ func runResearch(ctx context.Context, args []string) error {
 		return fmt.Errorf("migrate: %w", err)
 	}
 	lg := llm.NewClient(fetcher_config.OPENROUTER_API_KEY, fetcher_config.Config.ALLOWED_MODELS)
-	col := research.NewCollector(hc, arch, dbStore.DB)
+	col := research.NewCollector(hcDocs, arch, dbStore.DB)
 
 	if *symbolFilter == "" {
 		return nil
@@ -380,6 +383,10 @@ func runResearch(ctx context.Context, args []string) error {
 		fetcher_config.ResearchLLMMaxTokens(),
 	)
 	started := time.Now()
+	// Hard ceiling for one symbol: discovery, downloads, parsing and all
+	// LLM segments must finish inside this window.
+	ctx, cancel := context.WithTimeout(ctx, 25*time.Minute)
+	defer cancel()
 	// Upsert the company first so every downstream write links to its ID.
 	info, err := research.GetCompanyBySymbol(dbStore.DB, *symbolFilter)
 	if err != nil {
@@ -392,7 +399,7 @@ func runResearch(ctx context.Context, args []string) error {
 	if err != nil {
 		return fmt.Errorf("upsert company: %w", err)
 	}
-	err = runCompany(llm.WithBudget(ctx, budget), dbStore.DB, hc, lg, col, co)
+	err = runCompany(llm.WithBudget(ctx, budget), dbStore.DB, hcWeb, lg, col, co)
 	reqs, toks := budget.Snapshot()
 	if err != nil {
 		log.Printf("[company] %s FAILED after %s: %v (llm: %d requests, %d tokens)",
@@ -431,6 +438,7 @@ func upsertCompany(db *mongo.Database, symbol, exchange string) (*models.Company
 func runCompany(ctx context.Context, db *mongo.Database, hc *http.Client, lg *llm.Client, col *research.Collector, co *models.Company) error {
 	info := research.InfoFromCompany(co)
 
+	log.Printf("[company] %s: discovery started", co.Symbol)
 	disc, err := research.DiscoverCompany(ctx, hc, info)
 	if err != nil {
 		return fmt.Errorf("discovery: %w", err)
@@ -439,6 +447,7 @@ func runCompany(ctx context.Context, db *mongo.Database, hc *http.Client, lg *ll
 		log.Printf("[company] %s: links save failed: %v", co.Symbol, err)
 	}
 
+	log.Printf("[company] %s: collecting documents", co.Symbol)
 	docs, err := col.Collect(ctx, co.ID, info, disc)
 	if err != nil {
 		log.Printf("[company] %s: collection failed: %v", co.Symbol, err)
@@ -452,6 +461,7 @@ func runCompany(ctx context.Context, db *mongo.Database, hc *http.Client, lg *ll
 			log.Printf("[company] %s: llm budget exhausted - skipping remaining segments", co.Symbol)
 			break
 		}
+		log.Printf("[company] %s: extracting %s", co.Symbol, segment)
 		in := research.ResourceInput{
 			CompanyID:    co.ID,
 			Segment:      segment,
@@ -468,7 +478,11 @@ func runCompany(ctx context.Context, db *mongo.Database, hc *http.Client, lg *ll
 		payload, xerr := research.ExtractTopics(ctx, lg, docs, segment)
 		switch {
 		case xerr == research.ErrNoText:
-			log.Printf("[company] %s: no text layer for %s (scanned docs?) - left pending", co.Symbol, segment)
+			if len(docs) == 0 {
+				log.Printf("[company] %s: no documents archived - %s left pending", co.Symbol, segment)
+			} else {
+				log.Printf("[company] %s: no text layer for %s (scanned docs?) - left pending", co.Symbol, segment)
+			}
 		case xerr != nil:
 			log.Printf("[company] %s: extraction (%s) failed: %v", co.Symbol, segment, xerr)
 		default:

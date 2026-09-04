@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
+	"regexp"
+	"strconv"
 	"strings"
 
 	"github.com/ledongthuc/pdf"
@@ -138,4 +140,39 @@ func SelectPages(pages []PageText, keywords []string, maxChars int) string {
 		used += len(t)
 	}
 	return strings.Join(parts, "\n\n")
+}
+
+// joinPageTexts renders page texts in the same "[page N]" format SelectPages
+// emits, so the parsed-text archive file can be re-split losslessly.
+func joinPageTexts(pages []PageText) string {
+	parts := make([]string, 0, len(pages))
+	for _, p := range pages {
+		parts = append(parts, fmt.Sprintf("[page %d]\n%s", p.Page, p.Text))
+	}
+	return strings.Join(parts, "\n\n")
+}
+
+var pageMarkerRx = regexp.MustCompile(`(?m)^\[page (\d+)\]\n`)
+
+// splitPageTexts reverses joinPageTexts for parsed-text files pulled back
+// from the archive.
+func splitPageTexts(content string) []PageText {
+	locs := pageMarkerRx.FindAllStringSubmatchIndex(content, -1)
+	if len(locs) == 0 {
+		return nil
+	}
+	out := make([]PageText, 0, len(locs))
+	for i, loc := range locs {
+		page, err := strconv.Atoi(content[loc[2]:loc[3]])
+		if err != nil {
+			continue
+		}
+		start := loc[1]
+		end := len(content)
+		if i+1 < len(locs) {
+			end = locs[i+1][0]
+		}
+		out = append(out, PageText{Page: page, Text: strings.TrimSpace(content[start:end])})
+	}
+	return out
 }
