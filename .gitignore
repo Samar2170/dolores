@@ -6,6 +6,6 @@ __reference_files__
 storage.db
 storage.db-*
 
-input/*
+tickertape_files/*
 
 *_extract.json

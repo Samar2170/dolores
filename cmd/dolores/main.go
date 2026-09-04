@@ -5,6 +5,7 @@
 //	research    run the company research pipeline over the universe
 //	key_metrics compute key metrics from stored tickertape financials
 //	files       list or download a company's archived files from Archivus
+//	financial_analysis  run the financial-analysis agent over stored data
 package main
 
 import (
@@ -26,6 +27,7 @@ import (
 	fetcher_config "dolores/fetcher/config"
 	"dolores/fetcher/indiasm"
 	"dolores/fetcher/tickertape"
+	"dolores/internal/analysis"
 	"dolores/internal/files"
 	"dolores/internal/llm"
 	"dolores/internal/market"
@@ -63,6 +65,8 @@ func main() {
 		err = runKeyMetrics(ctx, os.Args[2:])
 	case "files":
 		err = runCompanyFiles(ctx, os.Args[2:])
+	case "financial_analysis":
+		err = runFinancialAnalysis(ctx, os.Args[2:])
 	default:
 		usage()
 	}
@@ -81,7 +85,9 @@ commands:
   tickertape    extract stock data from a saved Tickertape page HTML
   research      run the company research pipeline (use -symbol to filter)
   key_metrics   compute key metrics from stored tickertape financials into key_metrics
-  files         list or download a company's archived files from Archivus`)
+  files         list or download a company's archived files from Archivus
+  financial_analysis
+                run the financial-analysis agent over the stored data for a symbol`)
 	os.Exit(2)
 }
 
@@ -212,6 +218,87 @@ func runKeyMetrics(ctx context.Context, args []string) error {
 		return err
 	}
 	return metrics.NewComputeTool(st.DB).Execute(ctx, computeArgs)
+}
+
+// runFinancialAnalysis collects every stored data source for a symbol (the
+// latest indiasm_stock payload, all key_metrics documents, the latest payload
+// of every tickertape_* collection and the revenue_segmentation research
+// resource when one exists) and runs the financial-analysis agent
+// (prompts/financial_analysis.md) over it. The report is upserted into the
+// company_financial_analysis collection and printed.
+func runFinancialAnalysis(ctx context.Context, args []string) error {
+	fs := flag.NewFlagSet("financial_analysis", flag.ExitOnError)
+	symbol := fs.String("symbol", "", "stock symbol (required)")
+	if err := fs.Parse(args); err != nil {
+		return err
+	}
+	if *symbol == "" {
+		return fmt.Errorf("financial_analysis: -symbol is required")
+	}
+
+	if err := fetcher_config.LoadDefaultConfigs(); err != nil {
+		return fmt.Errorf("config: %w", err)
+	}
+
+	st, err := store.GetStore(".")
+	if err != nil {
+		return fmt.Errorf("db: %w", err)
+	}
+	defer st.Close()
+	if err := st.Migrate(); err != nil {
+		return fmt.Errorf("migrate: %w", err)
+	}
+
+	co, err := upsertCompany(st.DB, *symbol, "")
+	if err != nil {
+		return err
+	}
+
+	data, err := analysis.Collect(ctx, st.DB, co)
+	if err != nil {
+		return fmt.Errorf("financial_analysis: %w", err)
+	}
+
+	// newFile, err := os.Create("f.json")
+	// if err != nil {
+	// 	return err
+	// }
+
+	// defer newFile.Close()
+	// err = json.NewEncoder(newFile).Encode(data)
+	// if err != nil {
+	// 	return err
+	// }
+	// return nil
+
+	lg := llm.NewClient(fetcher_config.OPENROUTER_API_KEY, fetcher_config.Config.ALLOWED_MODELS,
+		llm.WithTimeout(15*time.Minute))
+	budget := llm.NewBudget(
+		fetcher_config.ResearchLLMMaxRequests(),
+		fetcher_config.ResearchLLMMaxTokens(),
+	)
+	started := time.Now()
+
+	report, err := analysis.Run(llm.WithBudget(ctx, budget), lg, data)
+	reqs, toks := budget.Snapshot()
+	if err != nil {
+		log.Printf("[financial_analysis] %s FAILED after %s: %v (llm: %d requests, %d tokens)",
+			co.Symbol, time.Since(started).Round(time.Millisecond), err, reqs, toks)
+		return err
+	}
+
+	day, serr := analysis.SaveReport(ctx, st.DB, data, report, reqs, toks)
+	if serr != nil {
+		log.Printf("[financial_analysis] %s: save report failed: %v", co.Symbol, serr)
+	} else {
+		log.Printf("[financial_analysis] %s: report saved to %s (day %s)",
+			co.Symbol, models.ColCompanyFinancialAnalysis, day)
+	}
+
+	fmt.Println(report)
+	log.Printf("[financial_analysis] %s completed in %s (llm: %d requests, %d tokens)",
+		co.Symbol, time.Since(started).Round(time.Millisecond), reqs, toks)
+	return nil
 }
 
 // runCompanyFiles lists or downloads a company's archived Archivus files by

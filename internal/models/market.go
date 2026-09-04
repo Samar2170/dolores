@@ -12,6 +12,11 @@ const (
 	ColKeyMetrics = "key_metrics"
 )
 
+// Financial-analysis outputs.
+const (
+	ColCompanyFinancialAnalysis = "company_financial_analysis"
+)
+
 // Tickertape collections: one per extracted pageProps section.
 const (
 	ColTickerCommentary          = "tickertape_commentary"
