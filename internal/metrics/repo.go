@@ -9,6 +9,8 @@ import (
 	"errors"
 	"fmt"
 	"log"
+	"strconv"
+	"strings"
 	"time"
 
 	"go.mongodb.org/mongo-driver/v2/bson"
@@ -18,8 +20,8 @@ import (
 	"dolores/internal/models"
 )
 
-// Migrate ensures the key_metrics collection and its unique (symbol,
-// reporting) index exist.
+// Migrate ensures the key_metrics collection and its indexes exist: unique
+// (symbol, reporting) for upserts plus a lookup index on company_id.
 func Migrate(db *mongo.Database) error {
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
@@ -27,7 +29,25 @@ func Migrate(db *mongo.Database) error {
 		Keys:    bson.D{{Key: "symbol", Value: 1}, {Key: "reporting", Value: 1}},
 		Options: options.Index().SetUnique(true).SetName("idx_key_metrics_symbol_reporting"),
 	})
+	if err != nil {
+		return err
+	}
+	_, err = db.Collection(models.ColKeyMetrics).Indexes().CreateOne(ctx, mongo.IndexModel{
+		Keys:    bson.D{{Key: "company_id", Value: 1}},
+		Options: options.Index().SetName("idx_key_metrics_company"),
+	})
 	return err
+}
+
+// companyID resolves the company document for symbol (zero when absent, so
+// metrics for unknown symbols stay unlinked instead of failing).
+func companyID(ctx context.Context, db *mongo.Database, symbol string) bson.ObjectID {
+	var co models.Company
+	err := db.Collection(models.ColCompanies).FindOne(ctx, bson.M{"symbol": symbol}).Decode(&co)
+	if err != nil {
+		return bson.ObjectID{}
+	}
+	return co.ID
 }
 
 // latestDoc is the stored shape of a tickertape payload document.
@@ -90,6 +110,57 @@ func maxDay(days ...string) string {
 	return max
 }
 
+// LatestStockSnapshot returns the current price and market cap for a symbol
+// from the latest indiasm_stock payload (stockDetailsReusableData, falling
+// back to currentPrice for the quote). nil when nothing is stored.
+func LatestStockSnapshot(ctx context.Context, db *mongo.Database, symbol string) (*StockSnapshot, error) {
+	var d latestDoc
+	err := db.Collection(models.ColIndiasmStock).FindOne(ctx, bson.M{"name": symbol},
+		options.FindOne().SetSort(bson.M{"day": -1})).Decode(&d)
+	if errors.Is(err, mongo.ErrNoDocuments) {
+		return nil, nil
+	}
+	if err != nil {
+		return nil, err
+	}
+
+	var p struct {
+		CurrentPrice struct {
+			BSE string `bson:"BSE"`
+			NSE string `bson:"NSE"`
+		} `bson:"currentPrice"`
+		Details struct {
+			Price     string `bson:"price"`
+			Close     string `bson:"close"`
+			MarketCap string `bson:"marketCap"`
+		} `bson:"stockDetailsReusableData"`
+	}
+	if err := d.Payload.Unmarshal(&p); err != nil {
+		return nil, fmt.Errorf("decode indiasm_stock payload: %w", err)
+	}
+
+	priceStr := firstNonEmpty(p.Details.Price, p.CurrentPrice.NSE, p.CurrentPrice.BSE, p.Details.Close)
+	price, err := strconv.ParseFloat(strings.TrimSpace(priceStr), 64)
+	if err != nil || price <= 0 {
+		return nil, nil
+	}
+
+	snap := &StockSnapshot{Price: price, Day: d.Day, Source: "indiasm_stock"}
+	if mc, err := strconv.ParseFloat(strings.TrimSpace(p.Details.MarketCap), 64); err == nil && mc > 0 {
+		snap.MarketCap = mc
+	}
+	return snap, nil
+}
+
+func firstNonEmpty(vals ...string) string {
+	for _, v := range vals {
+		if strings.TrimSpace(v) != "" {
+			return v
+		}
+	}
+	return ""
+}
+
 // ComputeSymbol loads the statements for one symbol, computes its metrics and
 // upserts them into key_metrics. Returns (nil, nil) when the symbol has no
 // financial statements stored.
@@ -104,6 +175,16 @@ func ComputeSymbol(ctx context.Context, db *mongo.Database, symbol string) (*Key
 
 	doc := Compute(st)
 	doc.SourceDay = sourceDay
+	doc.CompanyID = companyID(ctx, db, symbol)
+	if doc.CompanyID.IsZero() {
+		log.Printf("[key_metrics] %s: no company doc, key_metrics saved unlinked", symbol)
+	}
+
+	snap, err := LatestStockSnapshot(ctx, db, symbol)
+	if err != nil {
+		log.Printf("[key_metrics] %s: indiasm price lookup failed: %v", symbol, err)
+	}
+	doc.Valuation = ComputeValuation(st, doc.Years, snap, &doc.SourceNotes)
 
 	coll := db.Collection(models.ColKeyMetrics)
 	_, err = coll.UpdateOne(ctx,

@@ -22,6 +22,12 @@ type Client struct {
 // Option configures optional Client behaviour.
 type Option func(*Client)
 
+// WithTimeout sets the per-request HTTP timeout (default 3 minutes). Long
+// analysis prompts may need a more generous one.
+func WithTimeout(d time.Duration) Option {
+	return func(c *Client) { c.hc.Timeout = d }
+}
+
 func NewClient(apiKey string, models []string, opts ...Option) *Client {
 	if len(models) == 0 {
 		models = []string{"z-ai/glm-5.3-flash"}

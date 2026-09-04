@@ -26,14 +26,18 @@ package metrics
 
 import (
 	"time"
+
+	"go.mongodb.org/mongo-driver/v2/bson"
 )
 
 // Statements are the tickertape statement rows, aligned per fiscal year end
-// (normalised "2006-01-02"). TTM rows have no endDate and are dropped.
+// (normalised "2006-01-02"). TTM income rows have no endDate; the latest one
+// is kept aside on TTM for the valuation snapshot instead of the timeline.
 type Statements struct {
 	Symbol    string
-	Reporting string   // reporting basis used: "consolidated" or "standalone"
-	Years     []string // fiscal year end dates, ascending
+	Reporting string     // reporting basis used: "consolidated" or "standalone"
+	Years     []string   // fiscal year end dates, ascending
+	TTM       *IncomeRow // trailing-twelve-months income row when present
 	Income    map[string]IncomeRow
 	Balance   map[string]BalanceRow
 	Cashflow  map[string]CashflowRow
@@ -85,8 +89,11 @@ type CashflowRow struct {
 }
 
 // KeyMetrics is the document stored per (symbol, reporting) in key_metrics.
+// When the symbol exists in the companies collection, CompanyID links the
+// document to it.
 type KeyMetrics struct {
 	Symbol      string        `bson:"symbol" json:"symbol"`
+	CompanyID   bson.ObjectID `bson:"company_id,omitempty" json:"company_id,omitempty"`
 	Reporting   string        `bson:"reporting" json:"reporting"`
 	SourceDay   string        `bson:"source_day" json:"source_day"`
 	ComputedAt  time.Time     `bson:"computed_at" json:"computed_at"`
@@ -97,8 +104,34 @@ type KeyMetrics struct {
 	YearsCount  int           `bson:"years_count" json:"years_count"`
 	Years       []YearMetrics `bson:"years" json:"years"`
 	Summary     Summary       `bson:"summary" json:"summary"`
+	Valuation   Valuation     `bson:"valuation" json:"valuation"`
 	Notes       []string      `bson:"notes" json:"notes"`
 	SourceNotes []string      `bson:"source_notes,omitempty" json:"source_notes,omitempty"`
+}
+
+// Valuation is the current-price valuation snapshot: P/E, EV/EBITDA, P/B and
+// PEG. Price and market cap come from the latest indiasm_stock payload; the
+// P/E and EV/EBITDA denominators prefer the TTM income row over the latest
+// fiscal year when one is reported. Market cap is in crore INR; PEG uses the
+// latest fiscal-year EPS growth (PAT growth fallback) and is undefined for
+// non-positive growth.
+type Valuation struct {
+	Price       *float64 `bson:"price" json:"price"`
+	PriceSource string   `bson:"price_source,omitempty" json:"price_source,omitempty"`
+	PriceDay    string   `bson:"price_day,omitempty" json:"price_day,omitempty"`
+	MarketCap   *float64 `bson:"market_cap" json:"market_cap"`
+	Shares      *float64 `bson:"shares_implied_cr" json:"shares_implied_cr"`
+	EPSBasis    string   `bson:"eps_basis,omitempty" json:"eps_basis,omitempty"`
+	EPS         *float64 `bson:"eps" json:"eps"`
+	PE          *float64 `bson:"pe" json:"pe"`
+	BookValuePS *float64 `bson:"book_value_per_share" json:"book_value_per_share"`
+	PB          *float64 `bson:"pb" json:"pb"`
+	EV          *float64 `bson:"ev" json:"ev"`
+	EBITDABasis string   `bson:"ebitda_basis,omitempty" json:"ebitda_basis,omitempty"`
+	EBITDA      *float64 `bson:"ebitda" json:"ebitda"`
+	EVEBITDA    *float64 `bson:"ev_ebitda" json:"ev_ebitda"`
+	EPSGrowth   *float64 `bson:"eps_growth" json:"eps_growth"`
+	PEG         *float64 `bson:"peg" json:"peg"`
 }
 
 // YearMetrics holds every metric computed for one fiscal year.

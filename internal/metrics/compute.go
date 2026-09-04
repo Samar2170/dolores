@@ -29,6 +29,164 @@ func Compute(st *Statements) *KeyMetrics {
 	return doc
 }
 
+// StockSnapshot is the current market price and market cap for a symbol,
+// taken from the latest indiasm_stock payload.
+type StockSnapshot struct {
+	Price     float64 // INR
+	MarketCap float64 // crore INR; 0 when not reported
+	Day       string
+	Source    string // "indiasm_stock"
+}
+
+// ComputeValuation derives the current-price valuation snapshot: P/E,
+// EV/EBITDA, P/B and PEG. Price (and market cap, when reported) come from the
+// indiasm_stock payload; when market cap is missing it falls back to the
+// tickertape share count (restated current basis). The P/E and EV/EBITDA
+// denominators prefer the TTM income row over the latest fiscal year. PEG
+// uses the latest fiscal-year EPS growth (PAT growth fallback) and is
+// undefined for non-positive growth. Caveats land in sourceNotes.
+func ComputeValuation(st *Statements, years []YearMetrics, snap *StockSnapshot, sourceNotes *[]string) Valuation {
+	note := func(s string) {
+		if sourceNotes != nil {
+			*sourceNotes = append(*sourceNotes, s)
+		}
+	}
+
+	var v Valuation
+	if snap == nil {
+		note("valuation metrics skipped: no indiasm_stock payload stored for symbol")
+		return v
+	}
+	price := round6(snap.Price)
+	v.Price = &price
+	v.PriceSource = snap.Source
+	v.PriceDay = snap.Day
+
+	shares, equity, debt, cash := latestBalanceItems(st)
+
+	// Market cap: indiasm value, or price x tickertape share count. When the
+	// indiasm market cap is used, the share count is implied by it
+	// (market cap / price) so book value stays consistent with the quote.
+	var mc float64
+	switch {
+	case snap.MarketCap > 0:
+		mc = snap.MarketCap
+		shares = fptr(round6(mc / price))
+	case shares != nil:
+		mc = price * *shares
+		note("valuation: market cap derived from price x tickertape share count (restated current basis)")
+	default:
+		note("valuation: market cap not reported and no tickertape share count - market cap, P/B, EV unavailable")
+	}
+	if mc > 0 {
+		v.MarketCap = fptr(round6(mc))
+	}
+	v.Shares = shares
+
+	// P/E: current price over TTM EPS (latest fiscal year fallback).
+	eps, epsBasis := incomeValue(st, years, func(r IncomeRow) *float64 { return r.EPS })
+	v.EPSBasis = epsBasis
+	v.EPS = eps
+	if eps != nil && *eps > 0 {
+		v.PE = ratio(&price, eps)
+	}
+
+	// P/B: market cap over total equity; book value per share alongside.
+	if equity != nil && *equity > 0 {
+		if mc > 0 {
+			v.PB = ratio(v.MarketCap, equity)
+		}
+		if shares != nil && *shares > 0 {
+			v.BookValuePS = ratio(equity, shares)
+		}
+	} else {
+		note("valuation: total equity missing - P/B unavailable")
+	}
+
+	// EV/EBITDA: market cap + debt - cash over TTM EBITDA (FY fallback).
+	if debt == nil {
+		note("valuation: total debt not reported (financial company?) - EV uses market cap less cash only")
+	}
+	if mc > 0 {
+		ev := mc
+		if debt != nil {
+			ev += *debt
+		}
+		if cash != nil {
+			ev -= *cash
+		}
+		v.EV = fptr(round6(ev))
+		ebitda, ebitdaBasis := incomeValue(st, years, func(r IncomeRow) *float64 { return r.EBITDA })
+		v.EBITDABasis = ebitdaBasis
+		v.EBITDA = ebitda
+		if ebitda != nil && *ebitda > 0 {
+			v.EVEBITDA = ratio(&ev, ebitda)
+		}
+	}
+
+	// PEG: P/E divided by EPS growth in percent (PAT growth fallback).
+	g, _ := latestGrowth(years)
+	if g == nil {
+		note("valuation: PEG unavailable - no EPS/PAT growth computable year over year")
+		return v
+	}
+	v.EPSGrowth = g
+	if *g <= 0 {
+		note("valuation: PEG undefined for non-positive earnings growth")
+		return v
+	}
+	if v.PE != nil {
+		v.PEG = fptr(round6(*v.PE / (*g * 100)))
+	}
+	return v
+}
+
+// incomeValue picks a value from the TTM income row when present (basis
+// "ttm"), else from the latest fiscal year (basis "fy").
+func incomeValue(st *Statements, years []YearMetrics, fn func(IncomeRow) *float64) (*float64, string) {
+	if st.TTM != nil {
+		if v := fn(*st.TTM); v != nil {
+			return v, "ttm"
+		}
+	}
+	for i := len(years) - 1; i >= 0; i-- {
+		day := years[i].EndDate
+		if inc, ok := st.Income[day]; ok {
+			if v := fn(inc); v != nil {
+				return v, "fy"
+			}
+		}
+	}
+	return nil, ""
+}
+
+// latestGrowth returns the most recent EPS YoY growth (PAT YoY fallback).
+func latestGrowth(years []YearMetrics) (*float64, string) {
+	for i := len(years) - 1; i >= 0; i-- {
+		if years[i].Growth.EPSYoY != nil {
+			return years[i].Growth.EPSYoY, "eps_yoy"
+		}
+	}
+	for i := len(years) - 1; i >= 0; i-- {
+		if years[i].Growth.PATYoY != nil {
+			return years[i].Growth.PATYoY, "pat_yoy"
+		}
+	}
+	return nil, ""
+}
+
+// latestBalanceItems returns the most recent balance-sheet values available.
+func latestBalanceItems(st *Statements) (shares, equity, debt, cash *float64) {
+	for i := len(st.Years) - 1; i >= 0; i-- {
+		bal := st.Balance[st.Years[i]]
+		if bal.SharesOutstanding == nil && bal.TotalEquity == nil && bal.TotalDebt == nil && bal.CashAndSTI == nil {
+			continue
+		}
+		return bal.SharesOutstanding, bal.TotalEquity, bal.TotalDebt, bal.CashAndSTI
+	}
+	return nil, nil, nil, nil
+}
+
 func defaultNotes() []string {
 	return []string{
 		"all ratio metrics are decimal fractions (0.153 = 15.3%); day counts in days; money in source unit (crores)",

@@ -105,13 +105,24 @@ func BuildContext(docs []CollectedDoc, keywords []string) string {
 			budgetLeft -= len(text)
 			continue
 		}
-		pages, total, _, err := ExtractPDFPages(d.Bytes)
-		if err != nil {
-			log.Printf("[context] %s: pdf parse failed: %v", d.FileName, err)
-			continue
+		pages := d.Pages
+		total := d.TotalPages
+		if pages == nil {
+			// Docs without a precomputed text layer (e.g. built outside
+			// Collect) still parse on the fly.
+			var err error
+			pages, total, _, err = ExtractPDFPages(d.Bytes)
+			if err != nil {
+				log.Printf("[context] %s: pdf parse failed: %v", d.FileName, err)
+				continue
+			}
 		}
 		if len(pages) == 0 {
-			log.Printf("[context] %s: %d/%d pages yielded text (likely scanned)", d.FileName, len(pages), total)
+			if total > 0 {
+				log.Printf("[context] %s: 0/%d pages yielded text (likely scanned)", d.FileName, total)
+			} else {
+				log.Printf("[context] %s: no text pages (likely scanned)", d.FileName)
+			}
 			continue
 		}
 		chunk := SelectPages(pages, keywords, minInt(perSourceCharBudget, maxInt(0, budgetLeft)))
@@ -176,6 +187,7 @@ func strictIntro() string {
 // runStrictJSON calls the model, validates into the right struct for the
 // segment, and retries once with a corrective hint on structural problems.
 func runStrictJSON(ctx context.Context, client *llm.Client, user, segment string) ([]byte, error) {
+	log.Printf("[extract] %s: %.1f KB of context -> llm", segment, float64(len(user))/1024)
 	raw, err := client.CompleteJSON(ctx, strictJSONSystem, user)
 	if err == nil {
 		if perr := validateSegment(raw, segment); perr == nil {

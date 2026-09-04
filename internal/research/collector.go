@@ -10,6 +10,8 @@ import (
 	"strings"
 	"time"
 
+	"go.mongodb.org/mongo-driver/v2/bson"
+	"go.mongodb.org/mongo-driver/v2/mongo"
 	"golang.org/x/net/html"
 
 	"dolores/storage"
@@ -19,6 +21,10 @@ const (
 	docKindIRIndex     = "ir_index_page"
 	docKindProductText = "product_pages_text"
 	maxDocBytes        = 90 << 20
+
+	maxAnnualReportAttempts = 3
+	maxPresentationAttempts = 2
+	minPDFBytes             = 20 << 10 // smaller files are usually error pages
 )
 
 // CollectedDoc is one raw material archived into the symbol's research folder.
@@ -31,15 +37,18 @@ type CollectedDoc struct {
 	ArchivusPath string
 	RawDataUrl   string
 	Bytes        []byte
+	Pages        []PageText // PDF text layer, extracted once in Collect
+	TotalPages   int
 }
 
 type Collector struct {
 	hc    *http.Client
 	store *storage.ArchivusClient
+	db    *mongo.Database
 }
 
-func NewCollector(hc *http.Client, store *storage.ArchivusClient) *Collector {
-	return &Collector{hc: hc, store: store}
+func NewCollector(hc *http.Client, store *storage.ArchivusClient, db *mongo.Database) *Collector {
+	return &Collector{hc: hc, store: store, db: db}
 }
 
 var unsafeNameRe = regexp.MustCompile(`[^A-Za-z0-9._-]+`)
@@ -49,82 +58,91 @@ func sanitizeName(s string) string {
 }
 
 // Collect downloads the selected discovery candidates plus auxiliary material,
-// uploads everything missing into <SYMBOL>/research/, and returns in-memory
-// copies ready for extraction.
-func (c *Collector) Collect(ctx context.Context, info CompanyInfo, disc *DiscoveryResult) ([]CollectedDoc, error) {
+// uploads everything missing into <SYMBOL>/research/, records each file's
+// metadata into the analysis_files collection, and returns in-memory copies
+// ready for extraction. PDF text layers are extracted exactly once per run and
+// archived as "<name>_text.txt" files, with metadata recorded in the
+// company_research_resources_parsed collection.
+func (c *Collector) Collect(ctx context.Context, companyID bson.ObjectID, info CompanyInfo, disc *DiscoveryResult) ([]CollectedDoc, error) {
 	const subFolder = "research"
 	fullFolder := info.Symbol + "/" + subFolder
 
-	existing := map[string]bool{}
+	existing := map[string]storage.FileInfo{}
 	if files, err := c.store.List(fullFolder); err != nil {
 		log.Printf("[collect] %s: list failed (%v), continuing", info.Symbol, err)
 	} else {
 		for _, f := range files {
 			if !f.IsDir {
-				existing[f.Name] = true
+				existing[f.Name] = f
 			}
 		}
 	}
 
 	var out []CollectedDoc
+	var parsedRows []ParsedResourceInput
 
-	ar := pickBest(disc.Docs, docAnnualReport)
-	var pres []DocCandidate
-	lastFY := ""
-	for _, d := range disc.Docs {
-		if d.Kind != docInvestorPresentation || d.URL == "" {
-			continue
-		}
-		if len(pres) > 0 && (d.FY == lastFY || d.Latest < pres[len(pres)-1].Latest-1) && len(pres) >= 1 {
-			continue
-		}
-		pres = append(pres, d)
-		lastFY = d.FY
-		if len(pres) >= 2 {
-			break
-		}
-	}
+	// Ranked queues with fallback: the best-ranked candidate is attempted
+	// first and the remaining ones only substitute for failed downloads.
+	arQueue := candidatesOfKind(disc.Docs, docAnnualReport, maxAnnualReportAttempts)
+	presQueue := candidatesOfKind(disc.Docs, docInvestorPresentation, maxPresentationAttempts+maxAnnualReportAttempts)
 
-	queue := make([]DocCandidate, 0, 4)
-	if ar.URL != "" {
-		queue = append(queue, *ar)
-	}
-	queue = append(queue, pres...)
-
+	successAR, successPres := 0, 0
+	presFYs := map[string]bool{}
+	queue := append(append(make([]DocCandidate, 0, len(arQueue)+len(presQueue)), arQueue...), presQueue...)
 	for _, cand := range queue {
+		isAR := cand.Kind == docAnnualReport
+		if isAR {
+			if successAR >= 1 {
+				continue
+			}
+		} else {
+			if successPres >= maxPresentationAttempts {
+				continue
+			}
+			if cand.FY != "" && presFYs[cand.FY] {
+				continue
+			}
+		}
+
 		start := time.Now()
-		data, ctype, err := FetchHTTP(ctx, c.hc, cand.URL, maxDocBytes)
+		data, ctype, name, reused, err := c.fetchDocBytes(ctx, info, existing, cand)
 		if err != nil {
 			log.Printf("[collect] %s: FAILED %s: %v", info.Symbol, cand.URL, err)
 			continue
 		}
-		if !IsPDF(data) && strings.Contains(ctype, "text/html") {
-			log.Printf("[collect] %s: got html instead of pdf, skipping %s", info.Symbol, cand.URL)
+		if !IsPDF(data) || len(data) < minPDFBytes {
+			log.Printf("[collect] %s: not a usable pdf (%s, %d bytes), skipping %s",
+				info.Symbol, ctype, len(data), cand.URL)
 			continue
 		}
-		fy := cand.FY
-		if fy == "" {
-			fy = time.Now().Format("2006")
-		}
-		name := sanitizeName(fmt.Sprintf("%s_%s_%s.pdf", info.Symbol, cand.Kind, fy))
-		path := fullFolder + "/" + name
-		if _, dup := existing[name]; !dup {
-			upStart := time.Now()
-			if err := c.store.Upload(fullFolder, []*storage.UploadFile{{Name: name, Content: data}}); err != nil {
-				log.Printf("[collect] %s: upload failed %s: %v", info.Symbol, name, err)
-				continue
+
+		if !reused {
+			if _, dup := existing[name]; !dup {
+				if err := c.store.Upload(fullFolder, []*storage.UploadFile{{Name: name, Content: data}}); err != nil {
+					log.Printf("[collect] %s: upload failed %s: %v", info.Symbol, name, err)
+					continue
+				}
+				existing[name] = storage.FileInfo{Name: name}
 			}
-			log.Printf("[collect] %s: uploaded %s (%.1f MB, dl %.1fs, ul %.1fs)",
-				info.Symbol, name, float64(len(data))/(1<<20),
-				time.Since(start).Seconds(), time.Since(upStart).Seconds())
-			existing[name] = true
-		} else {
-			log.Printf("[collect] %s: already archived, reused %s", info.Symbol, name)
 		}
-		out = append(out, CollectedDoc{
+		log.Printf("[collect] %s: %s ready (%.1f MB, %.1fs, reused=%t)",
+			info.Symbol, name, float64(len(data))/(1<<20), time.Since(start).Seconds(), reused)
+
+		doc := CollectedDoc{
 			Kind: cand.Kind, Title: pickTitle(cand), SourceURL: cand.URL, FY: cand.FY,
-			FileName: name, ArchivusPath: path, Bytes: data,
-		})
+			FileName: name, ArchivusPath: fullFolder + "/" + name, Bytes: data,
+		}
+		c.parseAndArchiveText(companyID, info, fullFolder, existing, &doc, &parsedRows)
+		out = append(out, doc)
+
+		if isAR {
+			successAR++
+		} else {
+			successPres++
+			if cand.FY != "" {
+				presFYs[cand.FY] = true
+			}
+		}
 	}
 
 	out = append(out, c.collectIRIndex(ctx, info, disc, fullFolder, existing)...)
@@ -137,6 +155,7 @@ func (c *Collector) Collect(ctx context.Context, info CompanyInfo, disc *Discove
 		}
 	}
 
+	// Signed URLs for everything in the folder (raw files + parsed text).
 	if files, err := c.store.List(fullFolder); err == nil {
 		byName := map[string]storage.FileInfo{}
 		for _, f := range files {
@@ -147,8 +166,119 @@ func (c *Collector) Collect(ctx context.Context, info CompanyInfo, disc *Discove
 				out[i].RawDataUrl = fi.SignedURL
 			}
 		}
+		for i := range parsedRows {
+			if fi, ok := byName[parsedRows[i].ParsedFile]; ok && fi.SignedURL != "" {
+				parsedRows[i].RawDataUrl = fi.SignedURL
+			}
+		}
+	}
+
+	if err := SaveParsedResources(c.db, parsedRows); err != nil {
+		log.Printf("[collect] %s: parsed resources save failed: %v", info.Symbol, err)
+	}
+
+	if c.db != nil {
+		if err := SaveAnalysisFiles(c.db, companyID, info.Symbol, out); err != nil {
+			log.Printf("[collect] %s: analysis_files save failed: %v", info.Symbol, err)
+		}
 	}
 	return out, nil
+}
+
+// candidatesOfKind returns up to n ranked candidates of one kind, best first
+// (dedupeAndRank has already ordered the discovery docs).
+func candidatesOfKind(docs []DocCandidate, kind string, n int) []DocCandidate {
+	out := make([]DocCandidate, 0, n)
+	for _, d := range docs {
+		if d.Kind != kind || d.URL == "" {
+			continue
+		}
+		out = append(out, d)
+		if len(out) >= n {
+			break
+		}
+	}
+	return out
+}
+
+// fetchDocBytes returns the PDF bytes of a candidate, reusing the copy already
+// archived in Archivus when present and downloading from the source only when
+// needed (re-runs keep working even when the original link has died).
+func (c *Collector) fetchDocBytes(ctx context.Context, info CompanyInfo, existing map[string]storage.FileInfo, cand DocCandidate) (data []byte, ctype, name string, reused bool, err error) {
+	fy := cand.FY
+	if fy == "" {
+		fy = time.Now().Format("2006")
+	}
+	name = sanitizeName(fmt.Sprintf("%s_%s_%s.pdf", info.Symbol, cand.Kind, fy))
+
+	if fi, dup := existing[name]; dup {
+		b, _, derr := c.store.Download(fi.ID)
+		if derr == nil {
+			return b, "", name, true, nil
+		}
+		log.Printf("[collect] %s: archived reuse of %s failed, re-downloading: %v", info.Symbol, name, derr)
+	}
+
+	b, ct, ferr := FetchHTTP(ctx, c.hc, cand.URL, maxDocBytes)
+	if ferr != nil {
+		return nil, "", name, false, ferr
+	}
+	return b, ct, name, false, nil
+}
+
+// parseAndArchiveText extracts the PDF text layer once, archives it as a
+// sibling "<name>_text.txt" file, and queues a metadata row for the
+// company_research_resources_parsed collection. Re-runs reuse the archived
+// text instead of re-parsing the PDF.
+func (c *Collector) parseAndArchiveText(companyID bson.ObjectID, info CompanyInfo, fullFolder string, existing map[string]storage.FileInfo, doc *CollectedDoc, rows *[]ParsedResourceInput) {
+	base := strings.TrimSuffix(doc.FileName, ".pdf")
+	parsedName := sanitizeName(base + "_text.txt")
+	parsedPath := fullFolder + "/" + parsedName
+
+	if fi, ok := existing[parsedName]; ok {
+		data, _, err := c.store.Download(fi.ID)
+		if err == nil {
+			if pages := splitPageTexts(string(data)); len(pages) > 0 {
+				doc.Pages = pages
+				*rows = append(*rows, ParsedResourceInput{
+					CompanyID: companyID, Symbol: info.Symbol, Kind: doc.Kind, FY: doc.FY,
+					SourceFile: doc.FileName, ParsedFile: parsedName, ArchivusPath: parsedPath,
+					Pages: len(pages), Chars: int64(len(data)),
+				})
+				log.Printf("[collect] %s: reused parsed text %s (%d pages)", info.Symbol, parsedName, len(pages))
+				return
+			}
+		}
+		log.Printf("[collect] %s: parsed-text reuse of %s failed, re-parsing: %v", info.Symbol, parsedName, err)
+	}
+
+	pages, total, issues, err := ExtractPDFPages(doc.Bytes)
+	if err != nil {
+		log.Printf("[collect] %s: %s pdf parse failed: %v", info.Symbol, doc.FileName, err)
+		return
+	}
+	doc.TotalPages = total
+	if len(pages) == 0 {
+		log.Printf("[collect] %s: %s: 0/%d pages yielded text (likely scanned)", info.Symbol, doc.FileName, total)
+		return
+	}
+	doc.Pages = pages
+
+	content := []byte(joinPageTexts(pages))
+	if _, dup := existing[parsedName]; !dup {
+		if err := c.store.Upload(fullFolder, []*storage.UploadFile{{Name: parsedName, Content: content}}); err != nil {
+			log.Printf("[collect] %s: parsed-text upload failed %s: %v", info.Symbol, parsedName, err)
+			return
+		}
+		existing[parsedName] = storage.FileInfo{Name: parsedName}
+	}
+	log.Printf("[collect] %s: parsed %s (%d/%d pages, %.1f KB text, %d page issues)",
+		info.Symbol, doc.FileName, len(pages), total, float64(len(content))/1024, len(issues))
+	*rows = append(*rows, ParsedResourceInput{
+		CompanyID: companyID, Symbol: info.Symbol, Kind: doc.Kind, FY: doc.FY,
+		SourceFile: doc.FileName, ParsedFile: parsedName, ArchivusPath: parsedPath,
+		Pages: len(pages), TotalPages: total, Chars: int64(len(content)),
+	})
 }
 
 func pickTitle(c DocCandidate) string {
@@ -162,21 +292,7 @@ func pickTitle(c DocCandidate) string {
 	return t
 }
 
-func pickBest(docs []DocCandidate, kind string) *DocCandidate {
-	for i := range docs {
-		if docs[i].Kind == kind && docs[i].Latest > 0 {
-			return &docs[i]
-		}
-	}
-	for i := range docs {
-		if docs[i].Kind == kind {
-			return &docs[i]
-		}
-	}
-	return &DocCandidate{}
-}
-
-func (c *Collector) collectIRIndex(ctx context.Context, info CompanyInfo, disc *DiscoveryResult, fullFolder string, existing map[string]bool) []CollectedDoc {
+func (c *Collector) collectIRIndex(ctx context.Context, info CompanyInfo, disc *DiscoveryResult, fullFolder string, existing map[string]storage.FileInfo) []CollectedDoc {
 	page := disc.IRLink
 	if page == "" {
 		page = disc.OfficialWebsite
@@ -211,7 +327,7 @@ func (c *Collector) collectIRIndex(ctx context.Context, info CompanyInfo, disc *
 
 var productPageHints = []string{"products-and-services", "products-and-services/", "/products", "product.php", "-products"}
 
-func (c *Collector) collectProductPages(ctx context.Context, info CompanyInfo, disc *DiscoveryResult, fullFolder string, existing map[string]bool) (*CollectedDoc, error) {
+func (c *Collector) collectProductPages(ctx context.Context, info CompanyInfo, disc *DiscoveryResult, fullFolder string, existing map[string]storage.FileInfo) (*CollectedDoc, error) {
 	base := disc.IRLink
 	if base == "" {
 		base = disc.OfficialWebsite

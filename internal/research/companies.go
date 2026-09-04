@@ -34,6 +34,18 @@ func (c CompanyInfo) Manufacturing() bool {
 	}
 }
 
+// InfoFromCompany mirrors a stored Company document into a CompanyInfo.
+func InfoFromCompany(co *models.Company) CompanyInfo {
+	return CompanyInfo{
+		Symbol:   co.Symbol,
+		Exchange: co.Exchange,
+		Name:     co.Name,
+		Industry: co.Industry,
+		Series:   co.Series,
+		ISINCode: co.ISINCode,
+	}
+}
+
 // GetCompanyBySymbol returns the company entry for symbol from the
 // companies collection (nil when not found). Exchange is always "BSE"
 // in this universe, so the lookup is keyed on symbol alone.
@@ -49,12 +61,6 @@ func GetCompanyBySymbol(db *mongo.Database, symbol string) (*CompanyInfo, error)
 	if err != nil {
 		return nil, err
 	}
-	return &CompanyInfo{
-		Symbol:   co.Symbol,
-		Exchange: co.Exchange,
-		Name:     co.Name,
-		Industry: co.Industry,
-		Series:   co.Series,
-		ISINCode: co.ISINCode,
-	}, nil
+	info := InfoFromCompany(&co)
+	return &info, nil
 }
