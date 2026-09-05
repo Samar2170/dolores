@@ -17,6 +17,11 @@ const (
 	ColCompanyFinancialAnalysis = "company_financial_analysis"
 )
 
+// Business & competitive-analysis outputs.
+const (
+	ColCompanyCompetitiveAnalysis = "company_business_and_competitive_analysis"
+)
+
 // Tickertape collections: one per extracted pageProps section.
 const (
 	ColTickerCommentary          = "tickertape_commentary"

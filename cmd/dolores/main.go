@@ -6,6 +6,9 @@
 //	key_metrics compute key metrics from stored tickertape financials
 //	files       list or download a company's archived files from Archivus
 //	financial_analysis  run the financial-analysis agent over stored data
+//	business_competitive_analysis
+//	                        run the business & competitive research agent over
+//	                        the parsed annual report and investor presentation
 package main
 
 import (
@@ -28,6 +31,7 @@ import (
 	"dolores/fetcher/indiasm"
 	"dolores/fetcher/tickertape"
 	"dolores/internal/analysis"
+	"dolores/internal/competitive"
 	"dolores/internal/files"
 	"dolores/internal/llm"
 	"dolores/internal/market"
@@ -67,6 +71,8 @@ func main() {
 		err = runCompanyFiles(ctx, os.Args[2:])
 	case "financial_analysis":
 		err = runFinancialAnalysis(ctx, os.Args[2:])
+	case "business_competitive_analysis":
+		err = runBusinessCompetitiveAnalysis(ctx, os.Args[2:])
 	default:
 		usage()
 	}
@@ -87,7 +93,10 @@ commands:
   key_metrics   compute key metrics from stored tickertape financials into key_metrics
   files         list or download a company's archived files from Archivus
   financial_analysis
-                run the financial-analysis agent over the stored data for a symbol`)
+                run the financial-analysis agent over the stored data for a symbol
+  business_competitive_analysis
+                run the business & competitive research agent over the parsed
+                annual report and investor presentation for a symbol`)
 	os.Exit(2)
 }
 
@@ -297,6 +306,94 @@ func runFinancialAnalysis(ctx context.Context, args []string) error {
 
 	fmt.Println(report)
 	log.Printf("[financial_analysis] %s completed in %s (llm: %d requests, %d tokens)",
+		co.Symbol, time.Since(started).Round(time.Millisecond), reqs, toks)
+	return nil
+}
+
+// runBusinessCompetitiveAnalysis loads the latest parsed annual report and
+// parsed investor presentation of a company from Archivus into memory and
+// runs the business & competitive research agent
+// (prompts/business_competitive_analysis.md) over them. The report is
+// upserted into the company_business_and_competitive_analysis collection,
+// printed and optionally written to -out.
+func runBusinessCompetitiveAnalysis(ctx context.Context, args []string) error {
+	fs := flag.NewFlagSet("business_competitive_analysis", flag.ExitOnError)
+	symbol := fs.String("symbol", "", "stock symbol (required)")
+	out := fs.String("out", "", "path to also write the report to")
+	if err := fs.Parse(args); err != nil {
+		return err
+	}
+	if *symbol == "" {
+		return fmt.Errorf("business_competitive_analysis: -symbol is required")
+	}
+
+	if err := fetcher_config.LoadDefaultConfigs(); err != nil {
+		return fmt.Errorf("config: %w", err)
+	}
+
+	st, err := store.GetStore(".")
+	if err != nil {
+		return fmt.Errorf("db: %w", err)
+	}
+	defer st.Close()
+	if err := st.Migrate(); err != nil {
+		return fmt.Errorf("migrate: %w", err)
+	}
+	if err := competitive.Migrate(st.DB); err != nil {
+		return fmt.Errorf("migrate: %w", err)
+	}
+
+	co, err := upsertCompany(st.DB, *symbol, "")
+	if err != nil {
+		return err
+	}
+
+	arch := storage.NewArchivusClient(fetcher_config.ARCHIVUS_API_KEY, fetcher_config.StorageParentFolder()).WithTimeout(5 * time.Minute)
+	data, err := competitive.Collect(ctx, st.DB, arch, co)
+	if err != nil {
+		return fmt.Errorf("business_competitive_analysis: %w", err)
+	}
+	fmt.Println("[competitive] documents collected:")
+	for kind, doc := range data.Documents {
+		log.Printf("[competitive] %s: %s ready (%d/%d pages, %.1f KB text, truncated=%t) file=%s",
+			co.Symbol, kind, doc.Pages, doc.TotalPages, float64(doc.Chars)/1024, doc.Truncated, doc.ParsedFileURL)
+
+	}
+
+	lg := llm.NewClient(fetcher_config.OPENROUTER_API_KEY, fetcher_config.Config.ALLOWED_MODELS,
+		llm.WithTimeout(15*time.Minute))
+	budget := llm.NewBudget(
+		fetcher_config.ResearchLLMMaxRequests(),
+		fetcher_config.ResearchLLMMaxTokens(),
+	)
+	started := time.Now()
+
+	report, err := competitive.Run(llm.WithBudget(ctx, budget), lg, data)
+	reqs, toks := budget.Snapshot()
+	if err != nil {
+		log.Printf("[competitive] %s FAILED after %s: %v (llm: %d requests, %d tokens)",
+			co.Symbol, time.Since(started).Round(time.Millisecond), err, reqs, toks)
+		return err
+	}
+
+	day, serr := competitive.SaveReport(ctx, st.DB, data, report, reqs, toks)
+	if serr != nil {
+		log.Printf("[competitive] %s: save report failed: %v", co.Symbol, serr)
+	} else {
+		log.Printf("[competitive] %s: report saved to %s (day %s)",
+			co.Symbol, models.ColCompanyCompetitiveAnalysis, day)
+	}
+
+	if *out != "" {
+		if werr := os.WriteFile(*out, []byte(report), 0o644); werr != nil {
+			log.Printf("[competitive] %s: write report to %s failed: %v", co.Symbol, *out, werr)
+		} else {
+			log.Printf("[competitive] %s: report written to %s", co.Symbol, *out)
+		}
+	}
+
+	fmt.Println(report)
+	log.Printf("[competitive] %s completed in %s (llm: %d requests, %d tokens)",
 		co.Symbol, time.Since(started).Round(time.Millisecond), reqs, toks)
 	return nil
 }
