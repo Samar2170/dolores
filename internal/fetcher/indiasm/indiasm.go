@@ -14,9 +14,9 @@ import (
 	"net/url"
 	"time"
 
-	"dolores/fetcher/config"
+	"dolores/config"
 	"dolores/internal/market"
-	"dolores/storage"
+	"dolores/internal/storage"
 )
 
 const (

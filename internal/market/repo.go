@@ -1,7 +1,8 @@
+package market
+
 // Package market stores raw market-API payloads (Alpha Vantage, IndiaSM) as
 // queryable MongoDB documents, one collection per output kind. Each document
 // keeps the payload embedded so its fields can be queried with dot-notation.
-package market
 
 import (
 	"context"

@@ -12,7 +12,7 @@ import (
 	"sync"
 	"time"
 
-	fetcherconfig "dolores/fetcher/config"
+	fetcherconfig "dolores/config"
 )
 
 const defaultBaseURL = "http://localhost:8080"

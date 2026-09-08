@@ -14,7 +14,7 @@ import (
 	"go.mongodb.org/mongo-driver/v2/mongo"
 	"golang.org/x/net/html"
 
-	"dolores/storage"
+	"dolores/internal/storage"
 )
 
 const (

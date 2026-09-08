@@ -18,8 +18,8 @@ import (
 	"go.mongodb.org/mongo-driver/v2/mongo"
 
 	"dolores/internal/models"
+	"dolores/internal/storage"
 	"dolores/internal/tool"
-	"dolores/storage"
 )
 
 // ToolCompanyFiles is the tool name for company archive access.

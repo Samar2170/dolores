@@ -2,24 +2,16 @@ package store
 
 import (
 	"context"
+	"dolores/config"
+	"dolores/internal/models"
 	"errors"
+	"fmt"
 	"log"
-	"os"
 	"time"
 
 	"go.mongodb.org/mongo-driver/v2/bson"
 	"go.mongodb.org/mongo-driver/v2/mongo"
 	"go.mongodb.org/mongo-driver/v2/mongo/options"
-
-	"dolores/internal/analysis"
-	"dolores/internal/market"
-	"dolores/internal/metrics"
-	"dolores/internal/models"
-)
-
-const (
-	defaultMongoURI = "mongodb://localhost:27017"
-	defaultMongoDB  = "dolores"
 )
 
 type Store struct {
@@ -38,25 +30,34 @@ func GetStore(projectBaseDir string) (*Store, error) {
 	return s, nil
 }
 
-func mongoURI() string {
-	if uri := os.Getenv("MONGO_URI"); uri != "" {
-		return uri
+func mongoURI() (string, error) {
+	uri := config.MONGO_URI
+	if uri != "" {
+		return uri, nil
 	}
-	return defaultMongoURI
+	return "", fmt.Errorf("MONGO_URI environment variable is not set")
 }
 
-func mongoDBName() string {
-	if name := os.Getenv("MONGO_DB"); name != "" {
-		return name
+func mongoDBName() (string, error) {
+	if name := config.MONGO_DB_NAME; name != "" {
+		return name, nil
 	}
-	return defaultMongoDB
+	return "", fmt.Errorf("MONGO_DB environment variable is not set")
 }
 
 func (s *Store) Init() error {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
-	client, err := mongo.Connect(options.Client().ApplyURI(mongoURI()))
+	mongoUri, err := mongoURI()
+	if err != nil {
+		return err
+	}
+	mongoDBName, err := mongoDBName()
+	if err != nil {
+		return err
+	}
+	client, err := mongo.Connect(options.Client().ApplyURI(mongoUri))
 	if err != nil {
 		return err
 	}
@@ -64,8 +65,9 @@ func (s *Store) Init() error {
 		return err
 	}
 	s.Client = client
-	s.DB = client.Database(mongoDBName())
-	log.Printf("[store] connected to mongodb at %s, db=%s", mongoURI(), mongoDBName())
+
+	s.DB = client.Database(mongoDBName)
+	log.Printf("[store] connected to mongodb at %s, db=%s", mongoUri, mongoDBName)
 	return nil
 }
 
@@ -121,14 +123,14 @@ func (s *Store) Migrate(_ ...interface{}) error {
 	if err != nil {
 		return err
 	}
-
-	if err := market.Migrate(s.DB); err != nil {
-		return err
-	}
-	if err := metrics.Migrate(s.DB); err != nil {
-		return err
-	}
-	return analysis.Migrate(s.DB)
+	return nil
+	// if err := market.Migrate(s.DB); err != nil {
+	// 	return err
+	// }
+	// if err := metrics.Migrate(s.DB); err != nil {
+	// 	return err
+	// }
+	// return analysis.Migrate(s.DB)
 }
 
 // IsNotFound reports whether err is a missing-document error.

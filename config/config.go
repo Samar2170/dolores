@@ -16,6 +16,8 @@ var (
 	ARCHIVUS_API_KEY     string
 	ARCHIVUS_BASE_URL    string
 	OPENROUTER_API_KEY   string
+	MONGO_URI            string
+	MONGO_DB_NAME        string
 )
 
 const defaultStorageParentFolder = "financial_data"
@@ -23,9 +25,9 @@ const defaultStorageParentFolder = "financial_data"
 const defaultResearchLLMMaxRequests = 8
 
 type RunningConfig struct {
-	ALLOWED_MODELS           []string `yaml:"ALLOWED_MODELS"`
-	NOTIFICATION_CHANNELS    []string `yaml:"NOTIFICATION_CHANNELS"`
-	STORAGE_PARENT_FOLDER    []string `yaml:"STORAGE_PARENT_FOLDER"`
+	ALLOWED_MODELS            []string `yaml:"ALLOWED_MODELS"`
+	NOTIFICATION_CHANNELS     []string `yaml:"NOTIFICATION_CHANNELS"`
+	STORAGE_PARENT_FOLDER     []string `yaml:"STORAGE_PARENT_FOLDER"`
 	RESEARCH_LLM_MAX_REQUESTS int      `yaml:"RESEARCH_LLM_MAX_REQUESTS"`
 	RESEARCH_LLM_MAX_TOKENS   int      `yaml:"RESEARCH_LLM_MAX_TOKENS"`
 }
@@ -89,6 +91,8 @@ func LoadApiKeys() error {
 	OPENROUTER_API_KEY = loadConfigVar(&dotenv, "OPENROUTER_API_KEY")
 	INDIAN_SM_API_KEY = loadConfigVar(&dotenv, "INDIAN_SM_API_KEY")
 	INDIAN_SM_API_KEY2 = loadConfigVar(&dotenv, "INDIAN_SM_API_KEY2")
+	MONGO_URI = loadConfigVar(&dotenv, "MONGO_URI")
+	MONGO_DB_NAME = loadConfigVar(&dotenv, "MONGO_DB_NAME")
 	return nil
 }
 

@@ -3,11 +3,8 @@ Get AV DAta -> Add Tickertape data -> Extract -> Calculate key metrics -> (Produ
 
 
 
-Growth
 Volume vs price-led growth
 Guidance vs actual growth
-
-
 Market size / TAM
 Market share + trajectory
 Competitive landscape
@@ -15,7 +12,6 @@ Pricing power
 Customer concentration
 Geographic concentration
 Moat / competitive advantages
-Input-cost exposure
 
 Supplier/customer bargaining power
 Regulatory risks

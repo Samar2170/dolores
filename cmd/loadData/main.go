@@ -20,6 +20,7 @@ import (
 	"go.mongodb.org/mongo-driver/v2/mongo"
 	"go.mongodb.org/mongo-driver/v2/mongo/options"
 
+	"dolores/config"
 	"dolores/internal/models"
 	"dolores/internal/store"
 )
@@ -33,6 +34,9 @@ const (
 )
 
 func main() {
+
+	config.LoadApiKeys()
+	config.LoadDefaultConfigs()
 	file := flag.String("file", defaultFile, "path to the nifty500 xlsx file")
 	sheet := flag.String("sheet", defaultSheet, "worksheet name to read")
 	dry := flag.Bool("dry", false, "list what would be imported without writing")

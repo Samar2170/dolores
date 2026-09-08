@@ -9,10 +9,10 @@ import (
 	"strings"
 	"time"
 
-	fetcher_config "dolores/fetcher/config"
+	fetcher_config "dolores/config"
 	"dolores/internal/llm"
 	"dolores/internal/research"
-	"dolores/storage"
+	"dolores/internal/storage"
 )
 
 const (

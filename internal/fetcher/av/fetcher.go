@@ -1,8 +1,9 @@
+package av
+
 // Package av provides a minimal Alpha Vantage client for the endpoints that
 // work on a free API key (see apitest/alphavantage.ipynb): TIME_SERIES_DAILY
 // and GLOBAL_QUOTE. Raw JSON payloads are archived to Archivus storage and
 // mirrored into MongoDB (market.Repo) for indexing and querying.
-package av
 
 import (
 	"context"
@@ -14,9 +15,9 @@ import (
 	"sync"
 	"time"
 
-	"dolores/fetcher/config"
+	"dolores/config"
 	"dolores/internal/market"
-	"dolores/storage"
+	"dolores/internal/storage"
 )
 
 const (

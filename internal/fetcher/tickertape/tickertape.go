@@ -15,7 +15,7 @@ import (
 	"time"
 
 	"dolores/internal/market"
-	"dolores/storage"
+	"dolores/internal/storage"
 )
 
 // extractedKeys are the pageProps sections archived from a stock page.

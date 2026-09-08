@@ -1,7 +1,3 @@
-// Package tool defines the Tool interface for named, self-describing
-// operations executed with JSON arguments, plus a minimal registry for
-// wiring tools up by name. Fetchers and metric computation implement it so
-// callers (CLI, future LLM agent loop) execute them uniformly.
 package tool
 
 import (
@@ -11,16 +7,12 @@ import (
 	"sort"
 )
 
-// Tool is one named, self-describing operation. Execute decodes args
-// (a JSON object) and runs the operation to completion, including any
-// storage/archiving side effects.
 type Tool interface {
 	Name() string
 	Description() string
 	Execute(ctx context.Context, args json.RawMessage) error
 }
 
-// Registry holds tools by name.
 type Registry struct {
 	tools map[string]Tool
 }

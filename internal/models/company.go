@@ -55,8 +55,6 @@ type CompanyResearchResource struct {
 	ExtractedData bson.M `bson:"extracted_data,omitempty" json:"extracted_data,omitempty"`
 }
 
-// AnalysisFile holds the metadata of one file fetched during research and
-// archived into the company's research folder. File contents stay in Archivus.
 type AnalysisFile struct {
 	BaseModel    `bson:",inline"`
 	CompanyID    bson.ObjectID `bson:"company_id" json:"company_id"`

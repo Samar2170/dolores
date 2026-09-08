@@ -5,25 +5,20 @@ const (
 	ColAVTimeSeries  = "av_timeseries"
 	ColAVGlobalQuote = "av_global_quote"
 	ColIndiasmStock  = "indiasm_stock"
-)
 
-// Derived data collections.
-const (
+	// Derived data collections.
 	ColKeyMetrics = "key_metrics"
-)
 
-// Financial-analysis outputs.
-const (
+	// Financial-analysis outputs.
 	ColCompanyFinancialAnalysis = "company_financial_analysis"
-)
 
-// Business & competitive-analysis outputs.
-const (
+	// Business & competitive-analysis outputs.
 	ColCompanyCompetitiveAnalysis = "company_business_and_competitive_analysis"
-)
 
-// Tickertape collections: one per extracted pageProps section.
-const (
+	// Management, governance & risk-analysis outputs.
+	ColCompanyManagementAnalysis = "company_management_analysis"
+
+	// Tickertape collections: one per extracted pageProps section.
 	ColTickerCommentary          = "tickertape_commentary"
 	ColTickerFaq                 = "tickertape_faq"
 	ColTickerIncomeAnnual        = "tickertape_income_annual"
