@@ -9,3 +9,6 @@ storage.db-*
 tickertape_files/*
 
 *_extract.json
+
+.vscode/*
+

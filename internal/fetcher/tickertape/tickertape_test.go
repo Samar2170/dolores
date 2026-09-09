@@ -44,7 +44,7 @@ func isEmpty(v any) bool {
 }
 
 func TestExtractMatchesReference(t *testing.T) {
-	root := filepath.Join("..", "..", "tickertape_files")
+	root := filepath.Join("..", "..", "..", "tickertape_files")
 
 	got, err := Extract("KOTAKBANK", filepath.Join(root, "tickertape_kotak_resp.html"))
 	if err != nil {

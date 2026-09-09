@@ -15,7 +15,9 @@ import (
 	"go.mongodb.org/mongo-driver/v2/mongo"
 	"go.mongodb.org/mongo-driver/v2/mongo/options"
 
+	"dolores/config"
 	fetcher_config "dolores/config"
+	"dolores/internal/analysis"
 	"dolores/internal/fetcher/av"
 	"dolores/internal/fetcher/indiasm"
 	"dolores/internal/fetcher/tickertape"
@@ -56,6 +58,8 @@ func main() {
 		err = runKeyMetrics(ctx, os.Args[2:])
 	case "files":
 		err = runCompanyFiles(ctx, os.Args[2:])
+	case "financial_analysis":
+		err = runFinancialAnalysis(ctx, os.Args[2:])
 	default:
 		usage()
 	}
@@ -75,14 +79,6 @@ commands:
   research      run the company research pipeline (use -symbol to filter)
   key_metrics   compute key metrics from stored tickertape financials into key_metrics
   files         list or download a company's archived files from Archivus
-  financial_analysis
-                run the financial-analysis agent over the stored data for a symbol
-  business_competitive_analysis
-                run the business & competitive research agent over the parsed
-                annual report and investor presentation for a symbol
-  management_analysis
-                run the management, governance & risk agent over the parsed
-                annual report and investor presentation, the indiasm officers
                 and shareholding data and the earlier research reports`)
 	os.Exit(2)
 }
@@ -128,11 +124,12 @@ func runAPIData(ctx context.Context, args []string) error {
 	reg.Register(av.NewGlobalQuoteTool(av.New(arch, repo)))
 	reg.Register(indiasm.NewStockTool(indiasm.New(arch, repo)))
 
-	quoteArgs, err := json.Marshal(map[string]string{"symbol": co.Symbol, "exchange": co.Exchange})
+	quoteArgs, err := json.Marshal(map[string]string{"symbol": co.Symbol, "exchange": co.Exchange, "name": co.Name})
 	if err != nil {
 		return err
 	}
 	for _, name := range []string{av.ToolTimeSeriesDaily, av.ToolGlobalQuote, indiasm.ToolStock} {
+		// for _, name := range []string{indiasm.ToolStock} {
 		t, err := reg.Get(name)
 		if err != nil {
 			return err
@@ -194,6 +191,8 @@ func runTickertape(ctx context.Context, args []string) error {
 // the metrics_compute tool, for one symbol or for every symbol with
 // financials.
 func runKeyMetrics(ctx context.Context, args []string) error {
+	config.LoadDefaultConfigs()
+	config.LoadApiKeys()
 	fs := flag.NewFlagSet("key_metrics", flag.ExitOnError)
 	symbol := fs.String("symbol", "", "compute for one symbol (default: all symbols with tickertape financials)")
 	if err := fs.Parse(args); err != nil {
@@ -489,5 +488,45 @@ func reviewRowState(db *mongo.Database, co *models.Company) error {
 		fmt.Printf("  %-20s | link: %s\n", "", link)
 		fmt.Printf("  %-20s | raw : %t (archived)\n", "", raw != "")
 	}
+	return nil
+}
+
+func runFinancialAnalysis(ctx context.Context, args []string) error {
+	config.LoadDefaultConfigs()
+	config.LoadApiKeys()
+	fs := flag.NewFlagSet("financial_analysis", flag.ExitOnError)
+	symbol := fs.String("symbol", "", "run for one symbol (default: all symbols with tickertape financials)")
+	if err := fs.Parse(args); err != nil {
+		return err
+	}
+
+	st, err := store.GetStore(".")
+	if err != nil {
+		return fmt.Errorf("db: %w", err)
+	}
+	defer st.Close()
+	storage := storage.NewArchivusClient(fetcher_config.ARCHIVUS_API_KEY, fetcher_config.StorageParentFolder())
+
+	if err := st.Migrate(); err != nil {
+		return fmt.Errorf("migrate: %w", err)
+	}
+
+	company, err := upsertCompany(st.DB, *symbol, "")
+	if err != nil {
+		return err
+	}
+	fa := analysis.NewFinancialAnalysis(st, storage, *company)
+	financialStatement, err := fa.LoadData(ctx)
+	if err != nil {
+		return err
+	}
+
+	err = os.WriteFile("test.txt", []byte(financialStatement.String()), os.FileMode(os.ModePerm))
+	if err != nil {
+		return err
+	}
+
+	tokens := llm.EstimateTokens(financialStatement.String())
+	fmt.Println(tokens)
 	return nil
 }

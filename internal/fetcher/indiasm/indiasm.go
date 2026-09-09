@@ -12,6 +12,7 @@ import (
 	"io"
 	"net/http"
 	"net/url"
+	"strings"
 	"time"
 
 	"dolores/config"
@@ -61,10 +62,18 @@ func NewWithKey(apiKey string, storage *storage.ArchivusClient, saver market.Sav
 // Stock fetches the /stock endpoint for name (e.g. "ITC") — company profile,
 // financials, shareholding and recent news — and archives the raw payload to
 // Archivus and MongoDB.
-func (c *Client) Stock(ctx context.Context, name string) (json.RawMessage, error) {
-	raw, err := c.fetch(ctx, name)
+func (c *Client) Stock(ctx context.Context, symbol, name string) (json.RawMessage, error) {
+	var raw json.RawMessage
+	var err error
+	raw, err = c.fetch(ctx, symbol)
 	if err != nil {
-		return nil, err
+		if !strings.Contains(err.Error(), "Stock not found") {
+			return nil, err
+		}
+		raw, err = c.fetch(ctx, name)
+		if err != nil {
+			return nil, err
+		}
 	}
 	if err := c.save(ctx, name, raw); err != nil {
 		return nil, err
@@ -72,13 +81,13 @@ func (c *Client) Stock(ctx context.Context, name string) (json.RawMessage, error
 	return raw, nil
 }
 
-func (c *Client) fetch(ctx context.Context, name string) (json.RawMessage, error) {
+func (c *Client) fetch(ctx context.Context, symbol string) (json.RawMessage, error) {
 	if c.apiKey == "" {
 		return nil, fmt.Errorf("indiasm: missing API key")
 	}
 
 	q := url.Values{}
-	q.Set("name", name)
+	q.Set("name", symbol)
 
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, baseURL+"/stock?"+q.Encode(), nil)
 	if err != nil {

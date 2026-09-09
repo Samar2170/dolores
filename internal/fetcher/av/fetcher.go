@@ -12,6 +12,7 @@ import (
 	"io"
 	"net/http"
 	"net/url"
+	"strings"
 	"sync"
 	"time"
 
@@ -95,15 +96,16 @@ func (c *Client) fetch(ctx context.Context, function, symbol, exchange string) (
 	if c.apiKey == "" {
 		return nil, fmt.Errorf("av: missing API key")
 	}
+	symbol, err := normalizeSymbol(symbol, exchange)
+	if err != nil {
+		return nil, err
+	}
 	if err := c.waitRateLimit(ctx); err != nil {
 		return nil, err
 	}
 
 	q := url.Values{}
 	q.Set("function", function)
-	if exchange != "" {
-		symbol = symbol + "." + exchange
-	}
 	q.Set("symbol", symbol)
 	q.Set("apikey", c.apiKey)
 
@@ -133,18 +135,40 @@ func (c *Client) fetch(ctx context.Context, function, symbol, exchange string) (
 	if err := json.Unmarshal(body, &payload); err != nil {
 		return nil, fmt.Errorf("av: decode response: %w", err)
 	}
+	if len(payload) == 0 {
+		return nil, fmt.Errorf("av: %s %s: empty response (unknown symbol?)", function, symbol)
+	}
 	for _, key := range []string{"Error Message", "Note", "Information"} {
 		if msg, ok := payload[key]; ok {
-			return nil, fmt.Errorf("av: %s: %s", key, rawString(msg))
+			return nil, fmt.Errorf("av: %s %s: %s: %s", function, symbol, key, rawString(msg))
 		}
 	}
 	if key, ok := responseKey[function]; ok {
 		if _, ok := payload[key]; !ok {
-			return nil, fmt.Errorf("av: %s: response missing %q", function, key)
+			return nil, fmt.Errorf("av: %s %s: response missing %q", function, symbol, key)
 		}
 	}
 
 	return json.RawMessage(body), nil
+}
+
+// normalizeSymbol cleans a user-supplied symbol and applies the exchange
+// suffix ("M&M" + "BSE" -> "M&M.BSE"). Alpha Vantage expects uppercase
+// exchange mnemonics and answers an empty object or a generic "Invalid API
+// call" error for malformed symbols, so the client fails fast here instead.
+// An already-suffixed symbol (e.g. "RELIANCE.BSE") is never suffixed twice.
+func normalizeSymbol(symbol, exchange string) (string, error) {
+	s := strings.ToUpper(strings.TrimSpace(symbol))
+	if s == "" {
+		return "", fmt.Errorf("av: empty symbol")
+	}
+	if strings.ContainsAny(s, " \t\n") {
+		return "", fmt.Errorf("av: invalid symbol %q", s)
+	}
+	if e := strings.ToUpper(strings.TrimSpace(exchange)); e != "" && !strings.Contains(s, ".") {
+		s += "." + e
+	}
+	return s, nil
 }
 
 // kindByFunction maps an Alpha Vantage function to its market collection kind.

@@ -14,6 +14,7 @@ const ToolStock = "indiasm_stock"
 // stockArgs is the argument schema for the indiasm_stock tool.
 type stockArgs struct {
 	Symbol string `json:"symbol"`
+	Name   string `json:"name"`
 }
 
 // StockTool runs indiasm.Client.Stock for one symbol via tool.Tool.
@@ -41,7 +42,7 @@ func (t *StockTool) Execute(ctx context.Context, args json.RawMessage) error {
 	if a.Symbol == "" {
 		return fmt.Errorf("%s: symbol is required", ToolStock)
 	}
-	if _, err := t.client.Stock(ctx, a.Symbol); err != nil {
+	if _, err := t.client.Stock(ctx, a.Symbol, a.Name); err != nil {
 		return fmt.Errorf("%s: %w", ToolStock, err)
 	}
 	return nil
