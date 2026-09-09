@@ -7,6 +7,7 @@ import (
 	"dolores/internal/storage"
 	"dolores/internal/store"
 	"fmt"
+	"strings"
 	"time"
 
 	"go.mongodb.org/mongo-driver/v2/bson"
@@ -38,8 +39,8 @@ func (fs *FinancialStatement) IsEmpty() bool {
 func (fs *FinancialStatement) String() string {
 	return "Income Statement: " + formatStatement(fs.IncomeStatement) +
 		"\nBalance Sheet: " + formatStatement(fs.BalanceSheet) +
-		"\nCash Flow: " + formatStatement(fs.CashFlow)
-	// "\nKey Metrics: " + formatKeyMetrics(fs.KeyMetrics)
+		"\nCash Flow: " + formatStatement(fs.CashFlow) +
+		"\nKey Metrics: " + formatKeyMetrics(fs.KeyMetrics)
 }
 
 func formatStatement(statement []map[string]interface{}) string {
@@ -52,6 +53,83 @@ func formatStatement(statement []map[string]interface{}) string {
 		result += "\n"
 	}
 	return result
+}
+
+func formatKeyMetrics(metrics map[string]interface{}) string {
+	if metrics == nil {
+		return ""
+	}
+	return formatMetricMap(metrics, 0)
+}
+
+func formatMetricMap(data map[string]interface{}, depth int) string {
+	pad := strings.Repeat("  ", depth)
+	result := ""
+	for k, v := range data {
+		if v == nil || k == "_id" {
+			continue
+		}
+		if m, ok := asMetricMap(v); ok {
+			if nested := formatMetricMap(m, depth+1); nested != "" {
+				result += pad + k + ":\n" + nested
+			}
+			continue
+		}
+		if l, ok := asMetricList(v); ok {
+			if nested := formatMetricList(l, depth+1); nested != "" {
+				result += pad + k + ":\n" + nested
+			}
+			continue
+		}
+		result += pad + k + ": " + toString(v) + "\n"
+	}
+	return result
+}
+
+func formatMetricList(list []interface{}, depth int) string {
+	pad := strings.Repeat("  ", depth)
+	itemPad := strings.Repeat("  ", depth+1)
+	result := ""
+	for _, item := range list {
+		if m, ok := asMetricMap(item); ok {
+			formatted := formatMetricMap(m, depth+1)
+			if formatted == "" {
+				continue
+			}
+			result += pad + "- " + strings.TrimPrefix(formatted, itemPad)
+			continue
+		}
+		result += pad + "- " + toString(item) + "\n"
+	}
+	return result
+}
+
+func asMetricMap(v interface{}) (map[string]interface{}, bool) {
+	switch val := v.(type) {
+	case map[string]interface{}:
+		return val, true
+	case bson.M:
+		return val, true
+	case bson.D:
+		m := make(map[string]interface{}, len(val))
+		for _, e := range val {
+			m[e.Key] = e.Value
+		}
+		return m, true
+	default:
+		return nil, false
+	}
+}
+
+func asMetricList(v interface{}) ([]interface{}, bool) {
+	switch val := v.(type) {
+	case bson.A:
+		return val, true
+	case []interface{}:
+		return val, true
+	default:
+		return nil, false
+	}
 }
 
 func toString(value interface{}) string {
@@ -100,10 +178,10 @@ func (fa *FinancialAnalysis) LoadData(ctx context.Context) (FinancialStatement, 
 	if err != nil {
 		return FinancialStatement{}, err
 	}
+	statements.KeyMetrics = keyMetrics
 
 	fmt.Println("Financial Statements for company:", fa.Company.Symbol)
 	fmt.Println(statements.String())
-	fmt.Println("Key Metrics:", keyMetrics)
 	return statements, nil
 }
 

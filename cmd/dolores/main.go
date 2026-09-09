@@ -17,6 +17,7 @@ import (
 
 	"dolores/config"
 	fetcher_config "dolores/config"
+	"dolores/internal/agent"
 	"dolores/internal/analysis"
 	"dolores/internal/fetcher/av"
 	"dolores/internal/fetcher/indiasm"
@@ -60,6 +61,8 @@ func main() {
 		err = runCompanyFiles(ctx, os.Args[2:])
 	case "financial_analysis":
 		err = runFinancialAnalysis(ctx, os.Args[2:])
+	case "analyze":
+		err = runAnalysis(ctx, os.Args[2:])
 	default:
 		usage()
 	}
@@ -79,7 +82,9 @@ commands:
   research      run the company research pipeline (use -symbol to filter)
   key_metrics   compute key metrics from stored tickertape financials into key_metrics
   files         list or download a company's archived files from Archivus
-                and shareholding data and the earlier research reports`)
+                and shareholding data and the earlier research reports
+  analyze       run the generic analysis agent on a prompt with optional
+                data, company archive access and a web fallback`)
 	os.Exit(2)
 }
 
@@ -528,5 +533,89 @@ func runFinancialAnalysis(ctx context.Context, args []string) error {
 
 	tokens := llm.EstimateTokens(financialStatement.String())
 	fmt.Println(tokens)
+	return nil
+}
+
+// runAnalysis runs the generic analysis agent: prompt + optional data, with
+// access to the company's Archivus archive (PDFs parsed on the fly) and a
+// web-browsing fallback when the analysis is not satisfactory.
+func runAnalysis(ctx context.Context, args []string) error {
+	fs := flag.NewFlagSet("analyze", flag.ExitOnError)
+	symbol := fs.String("symbol", "", "company symbol for Archivus archive access (optional)")
+	analysis := fs.String("analysis", "", "analysis prompt (required unless -prompt-file)")
+	prompt, exists := agent.GetPromptFile(*analysis)
+	promptFile := fs.String("prompt-file", "", "file containing the analysis prompt")
+	data := fs.String("data", "", "inline data to analyse")
+	dataFile := fs.String("data-file", "", "data file path (text or pdf, parsed automatically)")
+	out := fs.String("out", "", "write the final answer to this file")
+	maxSteps := fs.Int("max-steps", 10, "max agent steps")
+	maxRequests := fs.Int("max-llm-requests", 24, "max LLM requests for the session")
+	maxTokens := fs.Int("max-llm-tokens", 0, "max LLM tokens for the session (0 = unlimited)")
+	noWeb := fs.Bool("no-web", false, "disable the web browsing fallback")
+
+	if !exists && *promptFile == "" {
+		return fmt.Errorf("analyze: invalid -analysis type '%s' (must be one of: financial, business, management)", *analysis)
+	}
+	if err := fs.Parse(args); err != nil {
+		return err
+	}
+
+	if err := fetcher_config.LoadDefaultConfigs(); err != nil {
+		return fmt.Errorf("config: %w", err)
+	}
+
+	p := strings.TrimSpace(prompt)
+	if p == "" && *promptFile != "" {
+		b, err := os.ReadFile(*promptFile)
+		if err != nil {
+			return err
+		}
+		p = strings.TrimSpace(string(b))
+	}
+	if p == "" {
+		return fmt.Errorf("analyze: -prompt or -prompt-file is required")
+	}
+	dataText := strings.TrimSpace(*data)
+	if *dataFile != "" {
+		txt, err := agent.LoadDataFile(*dataFile, nil, 0)
+		if err != nil {
+			return err
+		}
+		dataText = strings.TrimSpace(dataText + "\n\n" + txt)
+	}
+
+	arch := storage.NewArchivusClient(fetcher_config.ARCHIVUS_API_KEY, fetcher_config.StorageParentFolder()).WithTimeout(5 * time.Minute)
+	hcWeb := research.NewBrowserClient(45 * time.Second)
+	hcDocs := research.NewBrowserClient(120 * time.Second)
+	lg := llm.NewClient(fetcher_config.OPENROUTER_API_KEY, fetcher_config.Config.ALLOWED_MODELS)
+
+	ag := agent.New(lg,
+		agent.NewArchiveListTool(arch, *symbol),
+		agent.NewArchiveReadTool(arch, *symbol),
+	)
+	if !*noWeb {
+		ag.Register(agent.NewWebSearchTool(hcWeb))
+		ag.Register(agent.NewWebFetchTool(hcDocs, arch, *symbol))
+	}
+	ag.WithMaxSteps(*maxSteps)
+
+	budget := llm.NewBudget(*maxRequests, *maxTokens)
+	res, err := ag.Run(llm.WithBudget(ctx, budget), agent.Request{Prompt: p, Data: dataText, Symbol: *symbol})
+	reqs, toks := budget.Snapshot()
+	if err != nil {
+		return fmt.Errorf("analyze: %w (llm: %d requests, %d tokens)", err, reqs, toks)
+	}
+
+	if *out != "" {
+		if err := os.WriteFile(*out, []byte(res.Answer), 0o644); err != nil {
+			return err
+		}
+	}
+	fmt.Println(res.Answer)
+	log.Printf("[analyze] done in %d steps (tools: %s, web used: %t, llm: %d requests, %d tokens)",
+		res.Steps, strings.Join(res.ToolsUsed, ", "), res.WebUsed, reqs, toks)
+	if !res.Satisfactory {
+		log.Printf("[analyze] WARNING: agent reported the analysis as unsatisfactory")
+	}
 	return nil
 }

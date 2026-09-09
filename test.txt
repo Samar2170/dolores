@@ -1,33 +1,816 @@
-Income Statement: Profit Before Tax: 6350.26, Raw Materials: 50655.20, Interest and Other Items: 3648.46, Earnings Per Share: 34.13, Taxes and Other Items: 2652.22, Earnings Before Interest and Taxes: 12811.44, Operating Income: 6561.69, Power and Fuel Cost: 657.06, Selling, General and Administrative Expenses: 6253.64, Depreciation: 2812.72, displayPeriod: FY 2017, Profit Before Interest: 9998.72, Net Income: 3698.04, endDate: 2017-03-31, reporting: consolidated, Total Revenue: 85849.66, Dividends Per Share: 6.50, Price to Yield Ratio: 0.19, Employee Cost: 8910.63
-Operating Income: 7080.89, Selling, General and Administrative Expenses: 7591.15, Profit Before Tax: 10325.52, Net Income: 7510.39, Raw Materials: 53457.29, Depreciation: 3279.90, Earnings Before Interest and Taxes: 17592.51, Total Revenue: 96460.36, Employee Cost: 10004.62, reporting: consolidated, Dividends Per Share: 7.50, displayPeriod: FY 2018, endDate: 2018-03-31, Price to Yield Ratio: 0.11, Profit Before Interest: 14312.61, Interest and Other Items: 3987.09, Earnings Per Share: 69.23, Taxes and Other Items: 2815.13, Power and Fuel Cost: 733.90
-Price to Yield Ratio: 0.17, Power and Fuel Cost: 817.11, Selling, General and Administrative Expenses: 9658.98, endDate: 2019-03-31, Dividends Per Share: 8.50, Interest and Other Items: 5021.35, displayPeriod: FY 2019, Taxes and Other Items: 3555.38, Earnings Per Share: 48.90, Earnings Before Interest and Taxes: 17882.96, Total Revenue: 107742.09, Raw Materials: 61881.19, Depreciation: 3990.77, Operating Income: 6259.77, Profit Before Interest: 13892.19, Employee Cost: 11242.08, Net Income: 5315.46, Profit Before Tax: 8870.84, reporting: consolidated
-Earnings Before Interest and Taxes: 11042.44, Earnings Per Share: 1.16, Price to Yield Ratio: 2.03, Net Income: 127.04, Total Revenue: 77712.66, Employee Cost: 8214.82, Raw Materials: 37595.30, Selling, General and Administrative Expenses: 6316.52, endDate: 2020-03-31, Profit Before Interest: 7675.76, reporting: consolidated, Operating Income: 14012.66, Depreciation: 3366.68, Profit Before Tax: 1654.61, Dividends Per Share: 2.35, displayPeriod: FY 2020, Interest and Other Items: 6021.15, Taxes and Other Items: 1527.57, Power and Fuel Cost: 530.92
-Dividends Per Share: 8.75, displayPeriod: FY 2021, reporting: consolidated, Power and Fuel Cost: 429.56, Operating Income: 13295.85, Profit Before Tax: 3158.20, Earnings Before Interest and Taxes: 12638.53, Raw Materials: 38271.20, Profit Before Interest: 9260.42, Taxes and Other Items: 1345.71, Price to Yield Ratio: 0.54, Interest and Other Items: 6102.22, Employee Cost: 7813.26, Total Revenue: 77077.15, Earnings Per Share: 16.34, Depreciation: 3378.11, endDate: 2021-03-31, Net Income: 1812.49, Selling, General and Administrative Expenses: 4628.75
-Interest and Other Items: 5018.05, endDate: 2022-03-31, Raw Materials: 52664.85, Employee Cost: 8386.74, Power and Fuel Cost: 541.27, Profit Before Tax: 9361.77, Depreciation: 3507.50, Price to Yield Ratio: 0.20, Operating Income: 8087.38, Net Income: 6577.32, Earnings Per Share: 59.19, Taxes and Other Items: 2784.45, Earnings Before Interest and Taxes: 17887.32, Dividends Per Share: 11.55, Total Revenue: 93545.23, reporting: consolidated, Selling, General and Administrative Expenses: 5977.67, displayPeriod: FY 2022, Profit Before Interest: 14379.82
-Interest and Other Items: 5829.70, Earnings Per Share: 92.39, Earnings Before Interest and Taxes: 24246.74, Total Revenue: 127025.78, Taxes and Other Items: 3778.73, Price to Yield Ratio: 0.18, reporting: consolidated, Profit Before Interest: 19889.93, displayPeriod: FY 2023, endDate: 2023-03-31, Employee Cost: 9677.95, Operating Income: 7745.68, Net Income: 10281.50, Raw Materials: 76019.87, Power and Fuel Cost: 830.48, Depreciation: 4356.81, Dividends Per Share: 16.25, Selling, General and Administrative Expenses: 8505.06, Profit Before Tax: 14060.23
-displayPeriod: FY 2024, Selling, General and Administrative Expenses: 9832.20, Operating Income: 7907.01, Earnings Before Interest and Taxes: 28189.78, Net Income: 11268.64, Total Revenue: 142376.12, Taxes and Other Items: 4709.15, Depreciation: 4723.78, Profit Before Tax: 15977.79, Profit Before Interest: 23466.00, Dividends Per Share: 21.10, Interest and Other Items: 7488.21, Power and Fuel Cost: 752.73, Employee Cost: 10624.33, Price to Yield Ratio: 0.21, reporting: consolidated, endDate: 2024-03-31, Raw Materials: 85070.07, Earnings Per Share: 101.14
-Selling, General and Administrative Expenses: 10811.40, Profit Before Tax: 19079.62, Dividends Per Share: 25.30, Price to Yield Ratio: 0.22, Employee Cost: 11126.17, Depreciation: 6073.65, Operating Income: 10167.81, endDate: 2025-03-31, Total Revenue: 162929.29, Earnings Per Share: 115.90, Profit Before Interest: 28163.01, Interest and Other Items: 9083.39, Taxes and Other Items: 6150.52, displayPeriod: FY 2025, Earnings Before Interest and Taxes: 34236.66, Net Income: 12929.10, reporting: consolidated, Raw Materials: 95754.90, Power and Fuel Cost: 832.35
-Operating Income: 13602.14, Earnings Before Interest and Taxes: 42097.63, Selling, General and Administrative Expenses: 12428.71, Earnings Per Share: 153.09, Interest and Other Items: 9590.85, Net Income: 17098.85, Price to Yield Ratio: 0.22, Employee Cost: 12730.62, Profit Before Interest: 34775.61, displayPeriod: FY 2026, Total Revenue: 204049.25, endDate: 2026-03-31, Depreciation: 7322.02, Profit Before Tax: 25184.76, Dividends Per Share: 33, Taxes and Other Items: 8085.91, Raw Materials: 122223.59, reporting: consolidated, Power and Fuel Cost: 966.56
-Earnings Per Share: 165.27, Profit Before Tax: 27168.74, Profit Before Interest: 36888.31, Interest and Other Items: 9719.57, endDate: , reporting: , Dividends Per Share: 25.30, Taxes and Other Items: 8698.67, Price to Yield Ratio: 0.15, Total Revenue: 216774.06, Depreciation: 7534.93, Net Income: 18470.07, Earnings Before Interest and Taxes: 44423.24, Operating Income: 172350.82, displayPeriod: TTM
+Income Statement: Depreciation: 2812.72, displayPeriod: FY 2017, Selling, General and Administrative Expenses: 6253.64, Net Income: 3698.04, Earnings Before Interest and Taxes: 12811.44, Taxes and Other Items: 2652.22, Total Revenue: 85849.66, Dividends Per Share: 6.50, reporting: consolidated, Employee Cost: 8910.63, Earnings Per Share: 34.13, Operating Income: 6561.69, Interest and Other Items: 3648.46, endDate: 2017-03-31, Power and Fuel Cost: 657.06, Profit Before Tax: 6350.26, Profit Before Interest: 9998.72, Price to Yield Ratio: 0.19, Raw Materials: 50655.20
+reporting: consolidated, Earnings Before Interest and Taxes: 17592.51, Taxes and Other Items: 2815.13, Price to Yield Ratio: 0.11, endDate: 2018-03-31, Power and Fuel Cost: 733.90, Raw Materials: 53457.29, Profit Before Tax: 10325.52, Dividends Per Share: 7.50, Selling, General and Administrative Expenses: 7591.15, displayPeriod: FY 2018, Earnings Per Share: 69.23, Operating Income: 7080.89, Depreciation: 3279.90, Total Revenue: 96460.36, Employee Cost: 10004.62, Net Income: 7510.39, Profit Before Interest: 14312.61, Interest and Other Items: 3987.09
+Price to Yield Ratio: 0.17, endDate: 2019-03-31, Raw Materials: 61881.19, reporting: consolidated, Taxes and Other Items: 3555.38, Power and Fuel Cost: 817.11, Profit Before Tax: 8870.84, displayPeriod: FY 2019, Interest and Other Items: 5021.35, Employee Cost: 11242.08, Operating Income: 6259.77, Earnings Before Interest and Taxes: 17882.96, Profit Before Interest: 13892.19, Total Revenue: 107742.09, Selling, General and Administrative Expenses: 9658.98, Depreciation: 3990.77, Dividends Per Share: 8.50, Earnings Per Share: 48.90, Net Income: 5315.46
+endDate: 2020-03-31, Depreciation: 3366.68, reporting: consolidated, Power and Fuel Cost: 530.92, Total Revenue: 77712.66, Price to Yield Ratio: 2.03, Taxes and Other Items: 1527.57, Net Income: 127.04, Operating Income: 14012.66, Profit Before Interest: 7675.76, Profit Before Tax: 1654.61, Dividends Per Share: 2.35, Interest and Other Items: 6021.15, Raw Materials: 37595.30, Selling, General and Administrative Expenses: 6316.52, Employee Cost: 8214.82, Earnings Before Interest and Taxes: 11042.44, Earnings Per Share: 1.16, displayPeriod: FY 2020
+Price to Yield Ratio: 0.54, Raw Materials: 38271.20, Earnings Before Interest and Taxes: 12638.53, displayPeriod: FY 2021, reporting: consolidated, Total Revenue: 77077.15, Earnings Per Share: 16.34, Dividends Per Share: 8.75, Employee Cost: 7813.26, Interest and Other Items: 6102.22, endDate: 2021-03-31, Net Income: 1812.49, Depreciation: 3378.11, Taxes and Other Items: 1345.71, Power and Fuel Cost: 429.56, Selling, General and Administrative Expenses: 4628.75, Operating Income: 13295.85, Profit Before Interest: 9260.42, Profit Before Tax: 3158.20
+Earnings Per Share: 59.19, endDate: 2022-03-31, Taxes and Other Items: 2784.45, Price to Yield Ratio: 0.20, Selling, General and Administrative Expenses: 5977.67, Net Income: 6577.32, Profit Before Interest: 14379.82, Dividends Per Share: 11.55, Operating Income: 8087.38, Power and Fuel Cost: 541.27, Profit Before Tax: 9361.77, Raw Materials: 52664.85, Interest and Other Items: 5018.05, Total Revenue: 93545.23, Depreciation: 3507.50, reporting: consolidated, Employee Cost: 8386.74, Earnings Before Interest and Taxes: 17887.32, displayPeriod: FY 2022
+Power and Fuel Cost: 830.48, Employee Cost: 9677.95, Earnings Per Share: 92.39, reporting: consolidated, Total Revenue: 127025.78, Raw Materials: 76019.87, Taxes and Other Items: 3778.73, endDate: 2023-03-31, Interest and Other Items: 5829.70, Profit Before Tax: 14060.23, Dividends Per Share: 16.25, Price to Yield Ratio: 0.18, Profit Before Interest: 19889.93, Selling, General and Administrative Expenses: 8505.06, Earnings Before Interest and Taxes: 24246.74, Net Income: 10281.50, displayPeriod: FY 2023, Operating Income: 7745.68, Depreciation: 4356.81
+Net Income: 11268.64, Earnings Per Share: 101.14, displayPeriod: FY 2024, Taxes and Other Items: 4709.15, Operating Income: 7907.01, Raw Materials: 85070.07, Employee Cost: 10624.33, Dividends Per Share: 21.10, endDate: 2024-03-31, Earnings Before Interest and Taxes: 28189.78, Total Revenue: 142376.12, Power and Fuel Cost: 752.73, Profit Before Interest: 23466.00, Profit Before Tax: 15977.79, Interest and Other Items: 7488.21, Selling, General and Administrative Expenses: 9832.20, Price to Yield Ratio: 0.21, reporting: consolidated, Depreciation: 4723.78
+Net Income: 12929.10, Interest and Other Items: 9083.39, Raw Materials: 95754.90, Earnings Per Share: 115.90, Operating Income: 10167.81, Dividends Per Share: 25.30, endDate: 2025-03-31, Power and Fuel Cost: 832.35, Earnings Before Interest and Taxes: 34236.66, Total Revenue: 162929.29, Selling, General and Administrative Expenses: 10811.40, displayPeriod: FY 2025, reporting: consolidated, Profit Before Interest: 28163.01, Taxes and Other Items: 6150.52, Depreciation: 6073.65, Employee Cost: 11126.17, Price to Yield Ratio: 0.22, Profit Before Tax: 19079.62
+Operating Income: 13602.14, Earnings Per Share: 153.09, Price to Yield Ratio: 0.22, Employee Cost: 12730.62, Power and Fuel Cost: 966.56, Earnings Before Interest and Taxes: 42097.63, Interest and Other Items: 9590.85, displayPeriod: FY 2026, Profit Before Interest: 34775.61, Dividends Per Share: 33, reporting: consolidated, endDate: 2026-03-31, Depreciation: 7322.02, Net Income: 17098.85, Total Revenue: 204049.25, Taxes and Other Items: 8085.91, Raw Materials: 122223.59, Profit Before Tax: 25184.76, Selling, General and Administrative Expenses: 12428.71
+Depreciation: 7534.93, Net Income: 18470.07, Total Revenue: 216774.06, reporting: , endDate: , displayPeriod: TTM, Operating Income: 172350.82, Interest and Other Items: 9719.57, Earnings Before Interest and Taxes: 44423.24, Profit Before Tax: 27168.74, Dividends Per Share: 25.30, Taxes and Other Items: 8698.67, Price to Yield Ratio: 0.15, Profit Before Interest: 36888.31, Earnings Per Share: 165.27
 
-Balance Sheet: Common Stock: 270.89, endDate: 2017-03-31, Other Equity: 0, Deferred Tax Liabilities: 880.78, Reserves and Retained Earnings: 27083.51, Other Total Assets: 29818, Accounts Payable: 11435, Total Current Liabilities: 39832.47, Other Current Assets: 23347.79, Goodwill: 2493.68, Minority Interest: 6356.90, Additional Paid-in Capital: 2383.59, reporting: consolidated, displayPeriod: FY 2017, Other Current Liabilities: 28397.47, Total Debt: 48761.91, Other Total Liabilities: 6902.83, Current Assets: 48787.76, Net Current Liabilities: 37908.12, Total Long Term Debt: 30124.51, Total Current Assets: 48787.76, Total Inventory: 8886.01, Net Current Assets: 65047.72, Cash and Short Term Investments: 9354.70, Long Term Investments: 9961.77, Total Liabilities: 77740.59, Total Common Stock: 108.36, Total Equity: 36094.89, Total Assets: 113835.48, Total Shareholders' Equity: 113835.48, Net Property, Plant and Equipment: 22774.27, Total Receivables: 7199.26
-Net Current Liabilities: 42194.11, Net Property, Plant and Equipment: 25472.48, Common Stock: 543.13, Other Current Assets: 29352.96, Total Shareholders' Equity: 136369.31, Total Inventory: 9335.57, Other Equity: 0, Other Total Assets: 36174.38, reporting: consolidated, Total Current Assets: 59076.02, Minority Interest: 8250.47, Total Common Stock: 108.63, Total Receivables: 8489.82, Total Long Term Debt: 33809.18, endDate: 2018-03-31, Current Assets: 59076.02, Total Debt: 55897.92, Reserves and Retained Earnings: 34045.20, Additional Paid-in Capital: 2186.86, displayPeriod: FY 2018, Goodwill: 4978.89, Accounts Payable: 14289.22, Cash and Short Term Investments: 11897.67, Long Term Investments: 10667.54, Deferred Tax Liabilities: 745.82, Total Equity: 45025.66, Net Current Assets: 77293.29, Total Current Liabilities: 49149.54, Other Total Liabilities: 7639.11, Other Current Liabilities: 34860.32, Total Liabilities: 91343.65, Total Assets: 136369.31
-Accounts Payable: 16553.19, Reserves and Retained Earnings: 37139.38, Other Current Liabilities: 42056.14, reporting: consolidated, Net Property, Plant and Equipment: 27328.66, Other Equity: 0, Common Stock: 543.96, Total Liabilities: 113544.68, Total Inventory: 12200.16, Other Total Assets: 46579.16, Current Assets: 69406.04, endDate: 2019-03-31, Total Assets: 161888.66, Total Current Liabilities: 58609.33, Total Common Stock: 108.79, Net Current Assets: 92482.62, Total Equity: 48343.98, Total Current Assets: 69406.04, Long Term Investments: 12160.88, Total Shareholders' Equity: 161888.66, Deferred Tax Liabilities: 668.40, Other Current Assets: 33685.86, Total Long Term Debt: 43526.17, Goodwill: 6413.92, Total Debt: 70848.30, Other Total Liabilities: 10740.78, Minority Interest: 8360.57, Net Current Liabilities: 54935.35, displayPeriod: FY 2019, Cash and Short Term Investments: 14842.13, Additional Paid-in Capital: 2300.07, Total Receivables: 8677.89
-Net Current Assets: 101670.70, reporting: consolidated, Total Common Stock: 110.86, Accounts Payable: 12918.97, Other Total Liabilities: 11526.15, Total Debt: 82092.28, Deferred Tax Liabilities: 221.36, Reserves and Retained Earnings: 37006.32, Total Receivables: 6928.28, Net Property, Plant and Equipment: 31555.60, Total Current Assets: 64045.43, Common Stock: 554.28, endDate: 2020-03-31, Other Current Liabilities: 41090.55, Goodwill: 4990.15, Additional Paid-in Capital: 2408.71, Other Total Assets: 52210.17, Other Equity: 0, Total Equity: 47661.05, Total Assets: 165716.13, Net Current Liabilities: 64045.56, Total Shareholders' Equity: 165716.13, Total Current Liabilities: 54009.52, Cash and Short Term Investments: 14206.46, Total Liabilities: 118055.08, Long Term Investments: 12914.78, Total Long Term Debt: 52298.05, Minority Interest: 7691.74, displayPeriod: FY 2020, Other Current Assets: 31798.83, Total Inventory: 11111.86, Current Assets: 64045.43
-Common Stock: 555.15, Net Current Liabilities: 62870.09, Total Inventory: 9615.41, Additional Paid-in Capital: 2535.11, Other Total Assets: 44609.13, Other Current Assets: 33630.93, Reserves and Retained Earnings: 38491.66, Total Receivables: 6007.76, Total Assets: 164968.33, Minority Interest: 9070.31, Current Assets: 72137.91, Total Current Assets: 72137.91, Total Common Stock: 111.03, Total Long Term Debt: 54906.56, Net Current Assets: 92830.42, Total Equity: 50652.23, reporting: consolidated, Cash and Short Term Investments: 22883.81, Other Current Liabilities: 37372.42, Long Term Investments: 18745.84, Total Debt: 80624.83, displayPeriod: FY 2021, Other Total Liabilities: 7963.53, Deferred Tax Assets: 223.16, Other Equity: 0, Net Property, Plant and Equipment: 25808.80, Goodwill: 3443.49, Total Liabilities: 114316.10, endDate: 2021-03-31, Accounts Payable: 14073.59, Total Shareholders' Equity: 164968.33, Total Current Liabilities: 51446.01
-Total Long Term Debt: 51057.61, Total Assets: 172388.49, displayPeriod: FY 2022, reporting: consolidated, Other Total Liabilities: 8155.50, Accounts Payable: 17465.86, Net Property, Plant and Equipment: 28913.45, Total Inventory: 11595.82, Net Current Assets: 97240.49, Total Receivables: 6373.95, Total Debt: 77605.21, Additional Paid-in Capital: 2649.46, Total Common Stock: 111.21, endDate: 2022-03-31, Deferred Tax Liabilities: 61.79, Other Total Assets: 45308.64, Goodwill: 3807.85, Minority Interest: 9702.62, Other Current Liabilities: 38822.47, Total Shareholders' Equity: 172388.49, Reserves and Retained Earnings: 43917.12, Current Assets: 75148, Cash and Short Term Investments: 21967.49, Common Stock: 556.06, Net Current Liabilities: 59274.90, Total Current Liabilities: 56288.33, Other Equity: 0, Total Current Assets: 75148, Total Equity: 56825.26, Long Term Investments: 19210.55, Other Current Assets: 35210.74, Total Liabilities: 115563.23
-Total Assets: 204283.13, reporting: consolidated, Total Debt: 92246.85, Total Inventory: 16854.97, Goodwill: 6437.89, Other Equity: 0, Other Current Liabilities: 48080.22, Total Current Liabilities: 70579.41, endDate: 2023-03-31, Net Property, Plant and Equipment: 24670.67, Long Term Investments: 21006.50, Net Current Liabilities: 66221.61, displayPeriod: FY 2023, Cash and Short Term Investments: 25539.35, Reserves and Retained Earnings: 53063.49, Net Current Assets: 112957.69, Minority Interest: 10716.32, Other Current Assets: 41903.10, Total Shareholders' Equity: 204283.13, Total Current Assets: 91325.44, Common Stock: 956.82, Total Common Stock: 111.36, Deferred Tax Assets: 6.82, Total Liabilities: 136801.02, Additional Paid-in Capital: 2745.48, Other Total Assets: 60835.81, Accounts Payable: 22499.19, Total Equity: 67482.11, Other Total Liabilities: 8311.72, Current Assets: 91325.44, Total Long Term Debt: 57909.89, Total Receivables: 7028.02
-Total Current Assets: 98265.64, Total Current Liabilities: 75545.65, Goodwill: 6349.83, reporting: consolidated, Net Current Assets: 136456.10, Total Common Stock: 111.48, Other Total Liabilities: 8918.27, Total Liabilities: 155190.67, Cash and Short Term Investments: 25647.39, Total Inventory: 18590.47, Other Current Liabilities: 51526.76, Reserves and Retained Earnings: 62808.27, Current Assets: 98265.64, Net Property, Plant and Equipment: 29818.88, Deferred Tax Liabilities: 193.14, displayPeriod: FY 2024, endDate: 2024-03-31, Common Stock: 2579.11, Accounts Payable: 24018.89, Total Shareholders' Equity: 234721.74, Other Current Assets: 46568.38, Other Equity: 0, Additional Paid-in Capital: 2824.90, Long Term Investments: 21573.46, Total Long Term Debt: 70533.61, Total Assets: 234721.74, Minority Interest: 11318.79, Total Receivables: 7459.40, Other Total Assets: 78713.93, Total Debt: 106625.52, Net Current Liabilities: 79645.02, Total Equity: 79531.07
-endDate: 2025-03-31, Total Receivables: 8279.70, Deferred Tax Liabilities: 338.96, Total Current Assets: 126573.27, Common Stock: 4633.42, Reserves and Retained Earnings: 73547.87, Cash and Short Term Investments: 42562.31, Other Current Liabilities: 61513.34, Total Common Stock: 111.63, Long Term Investments: 19361.10, Total Equity: 93173.27, Total Current Liabilities: 90322.01, Net Current Assets: 149439.89, Total Liabilities: 182839.89, Other Current Assets: 55400.33, Total Long Term Debt: 82877.33, reporting: consolidated, Total Inventory: 20330.93, Net Current Liabilities: 92517.88, Net Property, Plant and Equipment: 34595.12, Total Shareholders' Equity: 276013.16, displayPeriod: FY 2025, Accounts Payable: 28808.67, Other Equity: 0, Total Debt: 124949.31, Total Assets: 276013.16, Other Total Assets: 87144.79, Goodwill: 8338.88, Other Total Liabilities: 9301.59, Current Assets: 126573.27, Minority Interest: 12059.14, Additional Paid-in Capital: 2932.84
-Net Current Liabilities: 87491.36, Total Long Term Debt: 77121.76, Deferred Tax Liabilities: 193.38, Net Property, Plant and Equipment: 37302.53, Accounts Payable: 35193.93, Common Stock: 3531.54, reporting: consolidated, Other Current Liabilities: 80904.63, Minority Interest: 16394.65, Goodwill: 8896.42, Total Equity: 112463.76, Total Current Assets: 147139.62, Net Current Assets: 168914.06, Other Equity: 0, Total Current Liabilities: 116098.56, Total Common Stock: 111.76, Total Assets: 316053.68, endDate: 2026-03-31, Additional Paid-in Capital: 3057.20, Long Term Investments: 19518.97, Other Current Assets: 63247.79, Total Liabilities: 203589.92, displayPeriod: FY 2026, Total Shareholders' Equity: 316053.68, Total Inventory: 22044.11, Total Debt: 133963.15, Total Receivables: 9064.27, Cash and Short Term Investments: 52783.45, Reserves and Retained Earnings: 89480.37, Other Total Liabilities: 10176.22, Other Total Assets: 103196.14, Current Assets: 147139.62
+Balance Sheet: Cash and Short Term Investments: 9354.70, Total Receivables: 7199.26, Accounts Payable: 11435, Additional Paid-in Capital: 2383.59, Goodwill: 2493.68, Total Debt: 48761.91, Other Current Assets: 23347.79, Long Term Investments: 9961.77, displayPeriod: FY 2017, Other Current Liabilities: 28397.47, Deferred Tax Liabilities: 880.78, Total Current Liabilities: 39832.47, Minority Interest: 6356.90, Net Current Assets: 65047.72, Net Current Liabilities: 37908.12, Total Long Term Debt: 30124.51, Net Property, Plant and Equipment: 22774.27, Current Assets: 48787.76, Total Inventory: 8886.01, endDate: 2017-03-31, reporting: consolidated, Total Common Stock: 108.36, Common Stock: 270.89, Other Total Assets: 29818, Total Shareholders' Equity: 113835.48, Total Liabilities: 77740.59, Other Total Liabilities: 6902.83, Other Equity: 0, Total Equity: 36094.89, Reserves and Retained Earnings: 27083.51, Total Current Assets: 48787.76, Total Assets: 113835.48
+Reserves and Retained Earnings: 34045.20, Net Property, Plant and Equipment: 25472.48, Current Assets: 59076.02, Total Inventory: 9335.57, Additional Paid-in Capital: 2186.86, displayPeriod: FY 2018, Other Total Assets: 36174.38, Total Liabilities: 91343.65, Total Equity: 45025.66, Total Common Stock: 108.63, Other Equity: 0, Total Current Liabilities: 49149.54, Long Term Investments: 10667.54, Accounts Payable: 14289.22, reporting: consolidated, Total Long Term Debt: 33809.18, Other Current Assets: 29352.96, Goodwill: 4978.89, Total Assets: 136369.31, Total Receivables: 8489.82, Deferred Tax Liabilities: 745.82, Cash and Short Term Investments: 11897.67, Net Current Assets: 77293.29, Other Current Liabilities: 34860.32, Total Debt: 55897.92, Total Shareholders' Equity: 136369.31, Net Current Liabilities: 42194.11, endDate: 2018-03-31, Total Current Assets: 59076.02, Other Total Liabilities: 7639.11, Minority Interest: 8250.47, Common Stock: 543.13
+Other Equity: 0, Other Current Liabilities: 42056.14, Total Equity: 48343.98, Deferred Tax Liabilities: 668.40, Additional Paid-in Capital: 2300.07, Total Receivables: 8677.89, Total Debt: 70848.30, Cash and Short Term Investments: 14842.13, Total Shareholders' Equity: 161888.66, Accounts Payable: 16553.19, Total Current Assets: 69406.04, Goodwill: 6413.92, Total Inventory: 12200.16, Net Current Assets: 92482.62, Total Assets: 161888.66, Total Common Stock: 108.79, Common Stock: 543.96, Net Current Liabilities: 54935.35, displayPeriod: FY 2019, Net Property, Plant and Equipment: 27328.66, Total Current Liabilities: 58609.33, Reserves and Retained Earnings: 37139.38, Other Total Assets: 46579.16, Minority Interest: 8360.57, Current Assets: 69406.04, endDate: 2019-03-31, reporting: consolidated, Total Long Term Debt: 43526.17, Other Current Assets: 33685.86, Total Liabilities: 113544.68, Long Term Investments: 12160.88, Other Total Liabilities: 10740.78
+Accounts Payable: 12918.97, Current Assets: 64045.43, Goodwill: 4990.15, Total Common Stock: 110.86, Total Inventory: 11111.86, Total Debt: 82092.28, Total Current Assets: 64045.43, Total Assets: 165716.13, Other Current Liabilities: 41090.55, displayPeriod: FY 2020, Total Shareholders' Equity: 165716.13, Total Long Term Debt: 52298.05, Additional Paid-in Capital: 2408.71, Reserves and Retained Earnings: 37006.32, Cash and Short Term Investments: 14206.46, Deferred Tax Liabilities: 221.36, Net Current Liabilities: 64045.56, Total Receivables: 6928.28, Minority Interest: 7691.74, Net Current Assets: 101670.70, Total Current Liabilities: 54009.52, Other Total Liabilities: 11526.15, Total Equity: 47661.05, Other Current Assets: 31798.83, Common Stock: 554.28, Other Equity: 0, Long Term Investments: 12914.78, Net Property, Plant and Equipment: 31555.60, Other Total Assets: 52210.17, reporting: consolidated, Total Liabilities: 118055.08, endDate: 2020-03-31
+Total Liabilities: 114316.10, Total Common Stock: 111.03, Total Assets: 164968.33, reporting: consolidated, Total Current Assets: 72137.91, Other Current Assets: 33630.93, Net Property, Plant and Equipment: 25808.80, Total Debt: 80624.83, Net Current Liabilities: 62870.09, Total Receivables: 6007.76, Accounts Payable: 14073.59, Current Assets: 72137.91, displayPeriod: FY 2021, Other Current Liabilities: 37372.42, Deferred Tax Assets: 223.16, endDate: 2021-03-31, Other Total Liabilities: 7963.53, Total Long Term Debt: 54906.56, Minority Interest: 9070.31, Total Shareholders' Equity: 164968.33, Other Equity: 0, Long Term Investments: 18745.84, Net Current Assets: 92830.42, Total Inventory: 9615.41, Total Current Liabilities: 51446.01, Total Equity: 50652.23, Goodwill: 3443.49, Common Stock: 555.15, Other Total Assets: 44609.13, Cash and Short Term Investments: 22883.81, Additional Paid-in Capital: 2535.11, Reserves and Retained Earnings: 38491.66
+Net Current Assets: 97240.49, Total Common Stock: 111.21, endDate: 2022-03-31, Total Liabilities: 115563.23, Common Stock: 556.06, Cash and Short Term Investments: 21967.49, Total Debt: 77605.21, displayPeriod: FY 2022, Accounts Payable: 17465.86, Other Total Liabilities: 8155.50, Deferred Tax Liabilities: 61.79, Total Equity: 56825.26, Current Assets: 75148, Total Inventory: 11595.82, Other Equity: 0, Net Current Liabilities: 59274.90, Total Current Assets: 75148, Total Long Term Debt: 51057.61, Total Shareholders' Equity: 172388.49, Net Property, Plant and Equipment: 28913.45, Total Current Liabilities: 56288.33, Long Term Investments: 19210.55, Other Current Liabilities: 38822.47, Total Receivables: 6373.95, Reserves and Retained Earnings: 43917.12, Additional Paid-in Capital: 2649.46, Minority Interest: 9702.62, Other Current Assets: 35210.74, Other Total Assets: 45308.64, reporting: consolidated, Total Assets: 172388.49, Goodwill: 3807.85
+Total Receivables: 7028.02, Other Total Liabilities: 8311.72, Total Debt: 92246.85, endDate: 2023-03-31, Net Current Assets: 112957.69, Cash and Short Term Investments: 25539.35, Other Current Assets: 41903.10, Minority Interest: 10716.32, Long Term Investments: 21006.50, Net Current Liabilities: 66221.61, Common Stock: 956.82, reporting: consolidated, Net Property, Plant and Equipment: 24670.67, Other Equity: 0, Other Total Assets: 60835.81, Total Shareholders' Equity: 204283.13, Total Liabilities: 136801.02, Goodwill: 6437.89, Total Inventory: 16854.97, Total Common Stock: 111.36, Accounts Payable: 22499.19, Total Long Term Debt: 57909.89, Total Current Liabilities: 70579.41, Other Current Liabilities: 48080.22, Total Current Assets: 91325.44, Total Assets: 204283.13, Current Assets: 91325.44, displayPeriod: FY 2023, Total Equity: 67482.11, Reserves and Retained Earnings: 53063.49, Deferred Tax Assets: 6.82, Additional Paid-in Capital: 2745.48
+Cash and Short Term Investments: 25647.39, Total Common Stock: 111.48, Total Shareholders' Equity: 234721.74, Reserves and Retained Earnings: 62808.27, Goodwill: 6349.83, displayPeriod: FY 2024, Total Equity: 79531.07, Minority Interest: 11318.79, Common Stock: 2579.11, Other Total Liabilities: 8918.27, Long Term Investments: 21573.46, Total Receivables: 7459.40, Total Long Term Debt: 70533.61, Total Liabilities: 155190.67, Total Current Assets: 98265.64, Net Current Assets: 136456.10, Net Property, Plant and Equipment: 29818.88, Total Inventory: 18590.47, Total Assets: 234721.74, Other Total Assets: 78713.93, Accounts Payable: 24018.89, reporting: consolidated, Other Current Liabilities: 51526.76, Additional Paid-in Capital: 2824.90, Other Current Assets: 46568.38, Total Current Liabilities: 75545.65, Other Equity: 0, Deferred Tax Liabilities: 193.14, Current Assets: 98265.64, Net Current Liabilities: 79645.02, Total Debt: 106625.52, endDate: 2024-03-31
+Minority Interest: 12059.14, Total Liabilities: 182839.89, Total Equity: 93173.27, Common Stock: 4633.42, Other Total Liabilities: 9301.59, Total Current Liabilities: 90322.01, Total Shareholders' Equity: 276013.16, Other Current Assets: 55400.33, Goodwill: 8338.88, Cash and Short Term Investments: 42562.31, Total Assets: 276013.16, endDate: 2025-03-31, Total Common Stock: 111.63, Other Current Liabilities: 61513.34, Net Current Liabilities: 92517.88, Long Term Investments: 19361.10, reporting: consolidated, Current Assets: 126573.27, Total Long Term Debt: 82877.33, Accounts Payable: 28808.67, Total Receivables: 8279.70, Net Current Assets: 149439.89, Deferred Tax Liabilities: 338.96, displayPeriod: FY 2025, Other Total Assets: 87144.79, Total Current Assets: 126573.27, Total Debt: 124949.31, Other Equity: 0, Total Inventory: 20330.93, Net Property, Plant and Equipment: 34595.12, Additional Paid-in Capital: 2932.84, Reserves and Retained Earnings: 73547.87
+Goodwill: 8896.42, Other Current Liabilities: 80904.63, Total Inventory: 22044.11, Total Equity: 112463.76, Net Current Assets: 168914.06, Total Debt: 133963.15, Net Current Liabilities: 87491.36, Current Assets: 147139.62, endDate: 2026-03-31, Cash and Short Term Investments: 52783.45, Total Current Liabilities: 116098.56, Total Current Assets: 147139.62, displayPeriod: FY 2026, Other Total Liabilities: 10176.22, Total Long Term Debt: 77121.76, Additional Paid-in Capital: 3057.20, Long Term Investments: 19518.97, Minority Interest: 16394.65, Total Shareholders' Equity: 316053.68, Accounts Payable: 35193.93, Other Total Assets: 103196.14, Common Stock: 3531.54, Total Receivables: 9064.27, Total Assets: 316053.68, Other Equity: 0, Total Liabilities: 203589.92, Total Common Stock: 111.76, reporting: consolidated, Reserves and Retained Earnings: 89480.37, Other Current Assets: 63247.79, Deferred Tax Liabilities: 193.38, Net Property, Plant and Equipment: 37302.53
 
-Cash Flow: endDate: 2017-03-31, reporting: consolidated, Cash Flow from Investing Activities: -5875.29, Total Cash Dividends Paid: 935.94, Net Changes in Cash: 415.77, displayPeriod: FY 2017, Change in Working Capital: -7728.36, Free Cash Flow: -4843.06, Cash Flow from Operating Activities: 183.09, Capital Expenditures: 5026.15, Cash Flow from Financing Activities: 6107.97
-Total Cash Dividends Paid: 963.36, Cash Flow from Investing Activities: -5467.22, Cash Flow from Financing Activities: 6314.50, reporting: consolidated, Cash Flow from Operating Activities: 681.86, Capital Expenditures: 5905.78, Net Changes in Cash: 1529.14, Free Cash Flow: -5223.92, displayPeriod: FY 2018, Change in Working Capital: -9477.17, endDate: 2018-03-31
-Free Cash Flow: -11687.30, endDate: 2019-03-31, Cash Flow from Operating Activities: -4347.29, Total Cash Dividends Paid: 1133.52, Cash Flow from Financing Activities: 13193.63, reporting: consolidated, Change in Working Capital: -15459.63, Net Changes in Cash: 1672.37, displayPeriod: FY 2019, Capital Expenditures: 7340.01, Cash Flow from Investing Activities: -7173.97
-Net Changes in Cash: -1393.97, reporting: consolidated, Cash Flow from Financing Activities: 6932.75, Free Cash Flow: -8352.95, displayPeriod: FY 2020, endDate: 2020-03-31, Change in Working Capital: -9231.05, Cash Flow from Investing Activities: -6869.79, Total Cash Dividends Paid: 1398.02, Cash Flow from Operating Activities: -1456.93, Capital Expenditures: 6896.02
-Cash Flow from Operating Activities: 17908.83, Capital Expenditures: 5989.49, Cash Flow from Investing Activities: -19685.50, Total Cash Dividends Paid: 271.04, Cash Flow from Financing Activities: 406.23, Net Changes in Cash: -1370.44, Free Cash Flow: 11919.34, endDate: 2021-03-31, Change in Working Capital: 10321.11, displayPeriod: FY 2021, reporting: consolidated
-Free Cash Flow: 3207.75, displayPeriod: FY 2022, endDate: 2022-03-31, Cash Flow from Operating Activities: 9247.55, Capital Expenditures: 6039.80, Total Cash Dividends Paid: 1037.46, Cash Flow from Financing Activities: -5882.60, Change in Working Capital: -1267.16, Cash Flow from Investing Activities: -3251.95, Net Changes in Cash: 113.00, reporting: consolidated
-Cash Flow from Investing Activities: -8866.27, Cash Flow from Financing Activities: 15946.11, Capital Expenditures: 6304.57, Total Cash Dividends Paid: 1522.13, displayPeriod: FY 2023, endDate: 2023-03-31, Change in Working Capital: -22715.91, Free Cash Flow: -13378.59, reporting: consolidated, Cash Flow from Operating Activities: -7074.02, Net Changes in Cash: 5.82
-endDate: 2024-03-31, Change in Working Capital: -23171.19, Capital Expenditures: 9945.99, Cash Flow from Investing Activities: -5614.77, reporting: consolidated, displayPeriod: FY 2024, Total Cash Dividends Paid: 2247, Net Changes in Cash: 1036.69, Cash Flow from Operating Activities: -5629.95, Cash Flow from Financing Activities: 12281.41, Free Cash Flow: -15575.94
-Capital Expenditures: 10391.95, Cash Flow from Investing Activities: -18616.13, Net Changes in Cash: 393.79, endDate: 2025-03-31, Free Cash Flow: -7216.14, Change in Working Capital: -18874.03, Cash Flow from Financing Activities: 15834.11, displayPeriod: FY 2025, reporting: consolidated, Total Cash Dividends Paid: 2806.43, Cash Flow from Operating Activities: 3175.81
-Free Cash Flow: 2051.91, displayPeriod: FY 2026, endDate: 2026-03-31, Total Cash Dividends Paid: 3376.31, Change in Working Capital: -17281.11, Cash Flow from Operating Activities: 11657.36, Capital Expenditures: 9605.45, Cash Flow from Financing Activities: 5391.04, Net Changes in Cash: -631.65, Cash Flow from Investing Activities: -17680.05, reporting: consolidated
+Cash Flow: Change in Working Capital: -7728.36, Total Cash Dividends Paid: 935.94, Cash Flow from Financing Activities: 6107.97, reporting: consolidated, Cash Flow from Operating Activities: 183.09, Free Cash Flow: -4843.06, Capital Expenditures: 5026.15, Cash Flow from Investing Activities: -5875.29, Net Changes in Cash: 415.77, displayPeriod: FY 2017, endDate: 2017-03-31
+Cash Flow from Financing Activities: 6314.50, Net Changes in Cash: 1529.14, endDate: 2018-03-31, Change in Working Capital: -9477.17, Capital Expenditures: 5905.78, Cash Flow from Operating Activities: 681.86, Cash Flow from Investing Activities: -5467.22, Total Cash Dividends Paid: 963.36, displayPeriod: FY 2018, reporting: consolidated, Free Cash Flow: -5223.92
+Free Cash Flow: -11687.30, displayPeriod: FY 2019, reporting: consolidated, Change in Working Capital: -15459.63, Total Cash Dividends Paid: 1133.52, Cash Flow from Investing Activities: -7173.97, Cash Flow from Operating Activities: -4347.29, Capital Expenditures: 7340.01, Cash Flow from Financing Activities: 13193.63, Net Changes in Cash: 1672.37, endDate: 2019-03-31
+Free Cash Flow: -8352.95, Cash Flow from Operating Activities: -1456.93, endDate: 2020-03-31, Net Changes in Cash: -1393.97, reporting: consolidated, Capital Expenditures: 6896.02, Cash Flow from Investing Activities: -6869.79, Total Cash Dividends Paid: 1398.02, displayPeriod: FY 2020, Change in Working Capital: -9231.05, Cash Flow from Financing Activities: 6932.75
+Net Changes in Cash: -1370.44, Free Cash Flow: 11919.34, displayPeriod: FY 2021, Change in Working Capital: 10321.11, Capital Expenditures: 5989.49, Cash Flow from Investing Activities: -19685.50, Total Cash Dividends Paid: 271.04, Cash Flow from Financing Activities: 406.23, endDate: 2021-03-31, reporting: consolidated, Cash Flow from Operating Activities: 17908.83
+Cash Flow from Investing Activities: -3251.95, Total Cash Dividends Paid: 1037.46, Cash Flow from Financing Activities: -5882.60, Net Changes in Cash: 113.00, Change in Working Capital: -1267.16, Cash Flow from Operating Activities: 9247.55, displayPeriod: FY 2022, endDate: 2022-03-31, Capital Expenditures: 6039.80, Free Cash Flow: 3207.75, reporting: consolidated
+displayPeriod: FY 2023, endDate: 2023-03-31, Capital Expenditures: 6304.57, Net Changes in Cash: 5.82, reporting: consolidated, Cash Flow from Operating Activities: -7074.02, Cash Flow from Financing Activities: 15946.11, Free Cash Flow: -13378.59, Change in Working Capital: -22715.91, Cash Flow from Investing Activities: -8866.27, Total Cash Dividends Paid: 1522.13
+endDate: 2024-03-31, Net Changes in Cash: 1036.69, displayPeriod: FY 2024, Capital Expenditures: 9945.99, Total Cash Dividends Paid: 2247, Cash Flow from Financing Activities: 12281.41, reporting: consolidated, Change in Working Capital: -23171.19, Cash Flow from Investing Activities: -5614.77, Cash Flow from Operating Activities: -5629.95, Free Cash Flow: -15575.94
+Change in Working Capital: -18874.03, Capital Expenditures: 10391.95, Total Cash Dividends Paid: 2806.43, Cash Flow from Operating Activities: 3175.81, Net Changes in Cash: 393.79, Free Cash Flow: -7216.14, Cash Flow from Investing Activities: -18616.13, Cash Flow from Financing Activities: 15834.11, displayPeriod: FY 2025, endDate: 2025-03-31, reporting: consolidated
+endDate: 2026-03-31, reporting: consolidated, Cash Flow from Operating Activities: 11657.36, Total Cash Dividends Paid: 3376.31, Free Cash Flow: 2051.91, displayPeriod: FY 2026, Change in Working Capital: -17281.11, Cash Flow from Financing Activities: 5391.04, Capital Expenditures: 9605.45, Cash Flow from Investing Activities: -17680.05, Net Changes in Cash: -631.65
+
+Key Metrics: source_notes:
+  - valuation metrics skipped: no indiasm_stock payload stored for symbol
+summary:
+  cagr:
+    revenue_5y: 0.21
+    pat_3y: 0.18
+    pat_5y: 0.57
+    eps_5y: 0.56
+    eps_full: 0.18
+    ebitda_3y: 0.20
+    ebitda_5y: 0.27
+    ebit_full: 0.15
+    pat_full: 0.19
+    eps_3y: 0.18
+    revenue_3y: 0.17
+    revenue_full: 0.10
+    ebit_3y: 0.20
+    ebit_5y: 0.30
+    ebitda_full: 0.14
+  margins:
+    net:
+      direction: rising
+      mean: 0.06
+      stddev: 0.03
+      trend_per_year: 0.00
+      min: 0.00
+      max: 0.08
+    ebitda:
+      mean: 0.18
+      stddev: 0.02
+      trend_per_year: 0.01
+      min: 0.14
+      max: 0.21
+      direction: rising
+    ebit:
+      mean: 0.14
+      stddev: 0.02
+      trend_per_year: 0.01
+      min: 0.10
+      max: 0.17
+      direction: rising
+  returns:
+    roce_latest: 0.18
+    roce_mean: 0.14
+    roic_latest: 0.13
+    roic_mean: 0.09
+    roe_latest: 0.17
+    roe_mean: 0.12
+    ronw_latest: 0.19
+    ronw_mean: 0.14
+  health:
+    debt_to_equity: 1.19
+    net_debt_to_ebitda: 1.93
+    interest_coverage: 3.63
+    current_ratio: 1.27
+    wc_cycle_days: -3.83
+  cashflow:
+    cfo_to_pat_mean: -0.11
+    fcf_latest: 2051.91
+    fcf_margin_latest: 0.01
+    fcf_margin_mean: -0.04
+    cfo_to_pat_latest: 0.68
+years:
+  - fy: FY 2017
+    end_date: 2017-03-31
+    margins:
+      ebit: 0.12
+      net: 0.04
+      ebitda: 0.15
+    returns:
+      roe: 0.10
+      ronw: 0.12
+      roce: 0.14
+      roic: 0.08
+    cashflow:
+      cfo_to_pat: 0.05
+      fcf_to_pat: -1.31
+      cfo_to_ebitda: 0.01
+      cfo: 183.09
+      capex: 5026.15
+      fcf: -4843.06
+      fcf_margin: -0.06
+    inputs:
+      net_income: 3698.04
+      shares_outstanding: 108.36
+      eps: 34.13
+      cfo: 183.09
+      capex: 5026.15
+      total_equity: 36094.89
+      cash_and_sti: 9354.70
+      total_revenue: 85849.66
+      ebit: 9998.72
+      pbt: 6350.26
+      fcf: -4843.06
+      minority_interest: 6356.90
+      net_worth: 29737.99
+      total_debt: 48761.91
+      total_assets: 113835.48
+      ebitda: 12811.44
+      current_assets: 48787.76
+      current_liabilities: 39832.47
+      receivables: 7199.26
+      inventory: 8886.01
+      payables: 11435.00
+    health:
+      net_debt: 39407.21
+      net_debt_to_ebitda: 3.08
+      dpo_days: 48.62
+      debt_to_equity: 1.35
+      dso_days: 30.61
+      dio_days: 37.78
+      receivables_pct_revenue: 0.08
+      wc_cycle_days: 19.77
+      inventory_pct_revenue: 0.10
+      payables_pct_cogs: 0.13
+      interest_coverage: 2.74
+      current_ratio: 1.22
+    data_gaps:
+      - gross_profit
+  - fy: FY 2018
+    end_date: 2018-03-31
+    inputs:
+      pbt: 10325.52
+      capex: 5905.78
+      fcf: -5223.92
+      cash_and_sti: 11897.67
+      current_liabilities: 49149.54
+      net_income: 7510.39
+      eps: 69.23
+      total_equity: 45025.66
+      total_debt: 55897.92
+      current_assets: 59076.02
+      shares_outstanding: 108.63
+      total_revenue: 96460.36
+      cfo: 681.86
+      minority_interest: 8250.47
+      net_worth: 36775.19
+      total_assets: 136369.31
+      receivables: 8489.82
+      inventory: 9335.57
+      payables: 14289.22
+      ebitda: 17592.51
+      ebit: 14312.61
+    margins:
+      net: 0.08
+      ebitda: 0.18
+      ebit: 0.15
+    data_gaps:
+      - gross_profit
+    growth:
+      revenue_yoy: 0.12
+      dol_ebitda: 3.02
+      ebitda_yoy: 0.37
+      pat_yoy: 1.03
+      dol_ebit: 3.49
+      ebit_yoy: 0.43
+      eps_yoy: 1.03
+    returns:
+      roe: 0.19
+      ronw: 0.23
+      roce: 0.18
+      roic: 0.13
+    health:
+      inventory_yoy: 0.05
+      net_debt: 44000.25
+      dso_days: 29.68
+      dio_days: 34.47
+      receivables_yoy: 0.18
+      inventory_pct_revenue: 0.10
+      current_ratio: 1.20
+      payables_yoy: 0.25
+      net_debt_to_ebitda: 2.50
+      receivables_pct_revenue: 0.09
+      payables_pct_cogs: 0.15
+      debt_to_equity: 1.24
+      interest_coverage: 3.59
+      dpo_days: 48.67
+      wc_cycle_days: 15.49
+    cashflow:
+      cfo_to_ebitda: 0.04
+      cfo: 681.86
+      capex: 5905.78
+      fcf: -5223.92
+      fcf_margin: -0.05
+      cfo_to_pat: 0.09
+      fcf_to_pat: -0.70
+  - cashflow:
+      fcf_margin: -0.11
+      cfo_to_pat: -0.82
+      fcf_to_pat: -2.20
+      cfo_to_ebitda: -0.24
+      cfo: -4347.29
+      capex: 7340.01
+      fcf: -11687.30
+    inputs:
+      net_income: 5315.46
+      total_debt: 70848.30
+      cash_and_sti: 14842.13
+      current_assets: 69406.04
+      current_liabilities: 58609.33
+      receivables: 8677.89
+      inventory: 12200.16
+      shares_outstanding: 108.79
+      total_revenue: 107742.09
+      fcf: -11687.30
+      net_worth: 39983.41
+      total_assets: 161888.66
+      ebitda: 17882.96
+      pbt: 8870.84
+      cfo: -4347.29
+      total_equity: 48343.98
+      minority_interest: 8360.57
+      payables: 16553.19
+      ebit: 13892.19
+      eps: 48.90
+      capex: 7340.01
+    growth:
+      ebitda_yoy: 0.02
+      ebit_yoy: -0.03
+      eps_yoy: -0.29
+      dol_ebitda: 0.14
+      pat_yoy: -0.29
+      revenue_yoy: 0.12
+      dol_ebit: -0.25
+    health:
+      interest_coverage: 2.77
+      dio_days: 36.48
+      inventory_pct_revenue: 0.11
+      net_debt_to_ebitda: 3.13
+      dpo_days: 52.24
+      inventory_yoy: 0.31
+      payables_pct_cogs: 0.15
+      debt_to_equity: 1.47
+      net_debt: 56006.17
+      dso_days: 29.08
+      receivables_yoy: 0.02
+      payables_yoy: 0.16
+      current_ratio: 1.18
+      wc_cycle_days: 13.32
+      receivables_pct_revenue: 0.08
+    data_gaps:
+      - gross_profit
+    fy: FY 2019
+    end_date: 2019-03-31
+    margins:
+      ebitda: 0.17
+      ebit: 0.13
+      net: 0.05
+    returns:
+      ronw: 0.14
+      roce: 0.15
+      roic: 0.09
+      roe: 0.11
+  - fy: FY 2020
+    inputs:
+      total_revenue: 77712.66
+      ebitda: 11042.44
+      net_income: 127.04
+      net_worth: 39969.31
+      total_debt: 82092.28
+      total_assets: 165716.13
+      current_liabilities: 54009.52
+      inventory: 11111.86
+      shares_outstanding: 110.86
+      ebit: 7675.76
+      pbt: 1654.61
+      cfo: -1456.93
+      capex: 6896.02
+      fcf: -8352.95
+      minority_interest: 7691.74
+      current_assets: 64045.43
+      receivables: 6928.28
+      eps: 1.16
+      total_equity: 47661.05
+      cash_and_sti: 14206.46
+      payables: 12918.97
+    growth:
+      dol_ebit: 1.61
+      revenue_cagr_3y: -0.03
+      ebit_yoy: -0.45
+      pat_yoy: -0.98
+      pat_cagr_3y: -0.67
+      eps_yoy: -0.98
+      eps_cagr_3y: -0.68
+      dol_ebitda: 1.37
+      revenue_yoy: -0.28
+      ebitda_yoy: -0.38
+      ebitda_cagr_3y: -0.05
+      ebit_cagr_3y: -0.08
+    margins:
+      ebitda: 0.14
+      ebit: 0.10
+      net: 0.00
+    health:
+      interest_coverage: 1.27
+      dpo_days: 69.21
+      payables_yoy: -0.22
+      debt_to_equity: 1.72
+      net_debt: 67885.82
+      current_ratio: 1.19
+      dio_days: 54.75
+      receivables_yoy: -0.20
+      inventory_yoy: -0.09
+      net_debt_to_ebitda: 6.15
+      wc_cycle_days: 22.18
+      inventory_pct_revenue: 0.14
+      dso_days: 36.65
+      receivables_pct_revenue: 0.09
+      payables_pct_cogs: 0.17
+    data_gaps:
+      - gross_profit
+    end_date: 2020-03-31
+    returns:
+      roe: 0.00
+      ronw: 0.00
+      roce: 0.07
+      roic: 0.01
+    cashflow:
+      cfo: -1456.93
+      capex: 6896.02
+      fcf: -8352.95
+      fcf_margin: -0.11
+      cfo_to_pat: -11.47
+      fcf_to_pat: -65.75
+      cfo_to_ebitda: -0.13
+  - cashflow:
+      cfo_to_pat: 9.88
+      fcf_to_pat: 6.58
+      cfo_to_ebitda: 1.42
+      cfo: 17908.83
+      capex: 5989.49
+      fcf: 11919.34
+      fcf_margin: 0.15
+    end_date: 2021-03-31
+    growth:
+      ebitda_cagr_3y: -0.10
+      eps_yoy: 13.12
+      ebitda_yoy: 0.14
+      ebit_cagr_3y: -0.14
+      pat_yoy: 13.27
+      dol_ebitda: -17.67
+      revenue_cagr_3y: -0.07
+      ebit_yoy: 0.21
+      pat_cagr_3y: -0.38
+      eps_cagr_3y: -0.38
+      revenue_yoy: -0.01
+      dol_ebit: -25.24
+    margins:
+      ebitda: 0.16
+      ebit: 0.12
+      net: 0.02
+    returns:
+      roic: 0.05
+      roe: 0.04
+      ronw: 0.04
+      roce: 0.08
+    health:
+      debt_to_equity: 1.59
+      payables_pct_cogs: 0.18
+      net_debt: 57741.02
+      interest_coverage: 1.52
+      dso_days: 30.63
+      wc_cycle_days: 15.79
+      net_debt_to_ebitda: 4.57
+      dpo_days: 63.91
+      inventory_pct_revenue: 0.12
+      payables_yoy: 0.09
+      current_ratio: 1.40
+      dio_days: 49.08
+      receivables_yoy: -0.13
+      receivables_pct_revenue: 0.08
+      inventory_yoy: -0.13
+    data_gaps:
+      - gross_profit
+    fy: FY 2021
+    inputs:
+      total_equity: 50652.23
+      total_debt: 80624.83
+      cash_and_sti: 22883.81
+      receivables: 6007.76
+      inventory: 9615.41
+      payables: 14073.59
+      net_income: 1812.49
+      cfo: 17908.83
+      capex: 5989.49
+      total_assets: 164968.33
+      current_assets: 72137.91
+      ebitda: 12638.53
+      pbt: 3158.20
+      eps: 16.34
+      ebit: 9260.42
+      minority_interest: 9070.31
+      net_worth: 41581.92
+      current_liabilities: 51446.01
+      shares_outstanding: 111.03
+      total_revenue: 77077.15
+      fcf: 11919.34
+  - cashflow:
+      capex: 6039.80
+      fcf: 3207.75
+      fcf_margin: 0.03
+      cfo_to_pat: 1.41
+      fcf_to_pat: 0.49
+      cfo_to_ebitda: 0.52
+      cfo: 9247.55
+    inputs:
+      total_revenue: 93545.23
+      pbt: 9361.77
+      net_income: 6577.32
+      total_equity: 56825.26
+      net_worth: 47122.64
+      cash_and_sti: 21967.49
+      total_assets: 172388.49
+      inventory: 11595.82
+      ebitda: 17887.32
+      eps: 59.19
+      fcf: 3207.75
+      shares_outstanding: 111.21
+      ebit: 14379.82
+      capex: 6039.80
+      current_assets: 75148.00
+      current_liabilities: 56288.33
+      receivables: 6373.95
+      cfo: 9247.55
+      minority_interest: 9702.62
+      total_debt: 77605.21
+      payables: 17465.86
+    health:
+      current_ratio: 1.34
+      dio_days: 41.38
+      receivables_pct_revenue: 0.07
+      inventory_pct_revenue: 0.12
+      payables_yoy: 0.24
+      net_debt: 55637.72
+      interest_coverage: 2.87
+      receivables_yoy: 0.06
+      net_debt_to_ebitda: 3.11
+      dso_days: 24.16
+      dpo_days: 61.53
+      debt_to_equity: 1.37
+      wc_cycle_days: 4.01
+      inventory_yoy: 0.21
+      payables_pct_cogs: 0.19
+    data_gaps:
+      - gross_profit
+    fy: FY 2022
+    end_date: 2022-03-31
+    growth:
+      pat_yoy: 2.63
+      pat_cagr_3y: 0.07
+      eps_cagr_3y: 0.07
+      revenue_cagr_3y: -0.05
+      ebitda_cagr_3y: 0.00
+      dol_ebitda: 1.94
+      revenue_yoy: 0.21
+      revenue_cagr_5y: 0.02
+      ebit_yoy: 0.55
+      eps_yoy: 2.62
+      ebitda_yoy: 0.42
+      ebitda_cagr_5y: 0.07
+      pat_cagr_5y: 0.12
+      eps_cagr_5y: 0.12
+      dol_ebit: 2.59
+      ebit_cagr_3y: 0.01
+      ebit_cagr_5y: 0.08
+    margins:
+      ebit: 0.15
+      net: 0.07
+      ebitda: 0.19
+    returns:
+      roe: 0.12
+      ronw: 0.15
+      roce: 0.13
+      roic: 0.09
+  - end_date: 2023-03-31
+    inputs:
+      total_revenue: 127025.78
+      capex: 6304.57
+      ebitda: 24246.74
+      ebit: 19889.93
+      pbt: 14060.23
+      eps: 92.39
+      fcf: -13378.59
+      minority_interest: 10716.32
+      net_worth: 56765.79
+      current_assets: 91325.44
+      cash_and_sti: 25539.35
+      total_assets: 204283.13
+      current_liabilities: 70579.41
+      receivables: 7028.02
+      inventory: 16854.97
+      shares_outstanding: 111.36
+      net_income: 10281.50
+      cfo: -7074.02
+      total_equity: 67482.11
+      total_debt: 92246.85
+      payables: 22499.19
+    growth:
+      ebit_cagr_5y: 0.07
+      ebitda_yoy: 0.36
+      ebitda_cagr_3y: 0.30
+      eps_cagr_5y: 0.06
+      dol_ebitda: 0.99
+      revenue_cagr_3y: 0.18
+      ebitda_cagr_5y: 0.07
+      ebit_yoy: 0.38
+      pat_yoy: 0.56
+      eps_yoy: 0.56
+      revenue_yoy: 0.36
+      revenue_cagr_5y: 0.06
+      pat_cagr_3y: 3.33
+      pat_cagr_5y: 0.06
+      eps_cagr_3y: 3.31
+      dol_ebit: 1.07
+      ebit_cagr_3y: 0.37
+    margins:
+      ebitda: 0.19
+      ebit: 0.16
+      net: 0.08
+    returns:
+      roe: 0.17
+      ronw: 0.20
+      roce: 0.16
+      roic: 0.12
+    health:
+      inventory_pct_revenue: 0.13
+      net_debt: 66707.50
+      net_debt_to_ebitda: 2.75
+      interest_coverage: 3.41
+      wc_cycle_days: 2.71
+      payables_yoy: 0.29
+      payables_pct_cogs: 0.18
+      current_ratio: 1.29
+      dio_days: 40.88
+      receivables_yoy: 0.10
+      inventory_yoy: 0.45
+      debt_to_equity: 1.37
+      dso_days: 19.25
+      dpo_days: 57.42
+      receivables_pct_revenue: 0.06
+    data_gaps:
+      - gross_profit
+    fy: FY 2023
+    cashflow:
+      fcf: -13378.59
+      fcf_margin: -0.11
+      cfo_to_pat: -0.69
+      fcf_to_pat: -1.30
+      cfo_to_ebitda: -0.29
+      cfo: -7074.02
+      capex: 6304.57
+  - fy: FY 2024
+    end_date: 2024-03-31
+    inputs:
+      total_assets: 234721.74
+      current_liabilities: 75545.65
+      pbt: 15977.79
+      eps: 101.14
+      cfo: -5629.95
+      fcf: -15575.94
+      total_debt: 106625.52
+      receivables: 7459.40
+      net_income: 11268.64
+      total_equity: 79531.07
+      cash_and_sti: 25647.39
+      current_assets: 98265.64
+      payables: 24018.89
+      shares_outstanding: 111.48
+      total_revenue: 142376.12
+      ebit: 23466.00
+      capex: 9945.99
+      net_worth: 68212.28
+      inventory: 18590.47
+      ebitda: 28189.78
+      minority_interest: 11318.79
+    margins:
+      ebitda: 0.20
+      ebit: 0.16
+      net: 0.08
+    returns:
+      roic: 0.11
+      roe: 0.15
+      ronw: 0.18
+      roce: 0.16
+    health:
+      interest_coverage: 3.13
+      dso_days: 18.57
+      wc_cycle_days: 4.38
+      inventory_yoy: 0.10
+      payables_pct_cogs: 0.17
+      net_debt: 80978.13
+      dio_days: 45.43
+      receivables_pct_revenue: 0.05
+      debt_to_equity: 1.34
+      net_debt_to_ebitda: 2.87
+      dpo_days: 59.63
+      payables_yoy: 0.07
+      current_ratio: 1.30
+      receivables_yoy: 0.06
+      inventory_pct_revenue: 0.13
+    growth:
+      ebitda_yoy: 0.16
+      ebitda_cagr_5y: 0.10
+      ebit_cagr_3y: 0.36
+      eps_cagr_3y: 0.84
+      eps_cagr_5y: 0.16
+      ebitda_cagr_3y: 0.31
+      pat_yoy: 0.10
+      pat_cagr_3y: 0.84
+      revenue_cagr_5y: 0.06
+      ebit_cagr_5y: 0.11
+      pat_cagr_5y: 0.16
+      eps_yoy: 0.09
+      dol_ebit: 1.49
+      dol_ebitda: 1.35
+      ebit_yoy: 0.18
+      revenue_yoy: 0.12
+      revenue_cagr_3y: 0.23
+    cashflow:
+      fcf: -15575.94
+      fcf_margin: -0.11
+      cfo_to_pat: -0.50
+      fcf_to_pat: -1.38
+      cfo_to_ebitda: -0.20
+      cfo: -5629.95
+      capex: 9945.99
+    data_gaps:
+      - gross_profit
+  - fy: FY 2025
+    end_date: 2025-03-31
+    inputs:
+      ebit: 28163.01
+      eps: 115.90
+      cfo: 3175.81
+      minority_interest: 12059.14
+      net_worth: 81114.13
+      cash_and_sti: 42562.31
+      current_assets: 126573.27
+      receivables: 8279.70
+      total_revenue: 162929.29
+      ebitda: 34236.66
+      pbt: 19079.62
+      total_equity: 93173.27
+      total_assets: 276013.16
+      current_liabilities: 90322.01
+      inventory: 20330.93
+      shares_outstanding: 111.63
+      net_income: 12929.10
+      capex: 10391.95
+      fcf: -7216.14
+      total_debt: 124949.31
+      payables: 28808.67
+    margins:
+      ebitda: 0.21
+      ebit: 0.17
+      net: 0.08
+    returns:
+      roe: 0.15
+      ronw: 0.17
+      roce: 0.16
+      roic: 0.11
+    growth:
+      ebit_cagr_3y: 0.25
+      pat_yoy: 0.15
+      eps_cagr_5y: 1.51
+      ebit_yoy: 0.20
+      ebitda_cagr_5y: 0.25
+      pat_cagr_3y: 0.25
+      eps_cagr_3y: 0.25
+      dol_ebitda: 1.49
+      revenue_cagr_5y: 0.16
+      ebitda_yoy: 0.21
+      ebitda_cagr_3y: 0.24
+      ebit_cagr_5y: 0.30
+      pat_cagr_5y: 1.52
+      eps_yoy: 0.15
+      dol_ebit: 1.39
+      revenue_yoy: 0.14
+      revenue_cagr_3y: 0.20
+    health:
+      receivables_pct_revenue: 0.05
+      interest_coverage: 3.10
+      receivables_yoy: 0.11
+      inventory_yoy: 0.09
+      debt_to_equity: 1.34
+      current_ratio: 1.40
+      dio_days: 43.60
+      dpo_days: 59.17
+      wc_cycle_days: 2.05
+      payables_yoy: 0.20
+      net_debt: 82387.00
+      net_debt_to_ebitda: 2.41
+      dso_days: 17.63
+      inventory_pct_revenue: 0.12
+      payables_pct_cogs: 0.18
+    cashflow:
+      cfo_to_pat: 0.25
+      fcf_to_pat: -0.56
+      cfo_to_ebitda: 0.09
+      cfo: 3175.81
+      capex: 10391.95
+      fcf: -7216.14
+      fcf_margin: -0.04
+    data_gaps:
+      - gross_profit
+  - margins:
+      ebitda: 0.21
+      ebit: 0.17
+      net: 0.08
+    health:
+      current_ratio: 1.27
+      dio_days: 37.90
+      payables_pct_cogs: 0.17
+      debt_to_equity: 1.19
+      interest_coverage: 3.63
+      wc_cycle_days: -3.83
+      receivables_yoy: 0.09
+      net_debt: 81179.70
+      inventory_yoy: 0.08
+      inventory_pct_revenue: 0.11
+      net_debt_to_ebitda: 1.93
+      dso_days: 15.51
+      dpo_days: 57.24
+      receivables_pct_revenue: 0.04
+      payables_yoy: 0.22
+    fy: FY 2026
+    end_date: 2026-03-31
+    inputs:
+      total_assets: 316053.68
+      current_liabilities: 116098.56
+      receivables: 9064.27
+      inventory: 22044.11
+      fcf: 2051.91
+      total_equity: 112463.76
+      minority_interest: 16394.65
+      cash_and_sti: 52783.45
+      current_assets: 147139.62
+      shares_outstanding: 111.76
+      total_revenue: 204049.25
+      ebit: 34775.61
+      net_income: 17098.85
+      eps: 153.09
+      cfo: 11657.36
+      net_worth: 96069.11
+      total_debt: 133963.15
+      ebitda: 42097.63
+      payables: 35193.93
+      pbt: 25184.76
+      capex: 9605.45
+    returns:
+      roe: 0.17
+      ronw: 0.19
+      roce: 0.18
+      roic: 0.13
+    cashflow:
+      cfo: 11657.36
+      capex: 9605.45
+      fcf: 2051.91
+      fcf_margin: 0.01
+      cfo_to_pat: 0.68
+      fcf_to_pat: 0.12
+      cfo_to_ebitda: 0.28
+    data_gaps:
+      - gross_profit
+    growth:
+      revenue_yoy: 0.25
+      revenue_cagr_5y: 0.21
+      ebitda_cagr_5y: 0.27
+      pat_cagr_5y: 0.57
+      eps_cagr_5y: 0.56
+      dol_ebit: 0.93
+      ebit_cagr_5y: 0.30
+      pat_cagr_3y: 0.18
+      eps_cagr_3y: 0.18
+      dol_ebitda: 0.91
+      ebit_yoy: 0.23
+      ebit_cagr_3y: 0.20
+      pat_yoy: 0.32
+      eps_yoy: 0.32
+      revenue_cagr_3y: 0.17
+      ebitda_yoy: 0.23
+      ebitda_cagr_3y: 0.20
